@@ -6,9 +6,13 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class DirichletCluster {
 
@@ -217,8 +221,56 @@ public class DirichletCluster {
 		br.close();
 		return readList;
 	}
-	
-	//private static void 
+
+	private static List<Set<Integer>> updateOverlap(
+			List<DoubleRead> doubleReadList, List<Set<Integer>> overlapList) {
+		Map<Integer, Integer> reverseMap = new HashMap<Integer, Integer>();
+		for (int i = 0; i < doubleReadList.size(); i++) {
+			reverseMap.put(doubleReadList.get(i).getId(), i);
+		}
+		List<Set<Integer>> resultList = new ArrayList<Set<Integer>>();
+		for (int i = 0; i < overlapList.size(); i++) {
+			Set<Integer> temp = new HashSet<Integer>();
+			for (Integer id : overlapList.get(i)) {
+				if (reverseMap.containsKey(id)) {
+					temp.add(reverseMap.get(id));
+				}
+			}
+			if (temp.size() > 0) {
+				resultList.add(temp);
+			}
+		}
+		return resultList;
+	}
+
+	private static int[] dirichletCluster(List<DoubleRead> doubleReadList,
+			List<Set<Integer>> overlapList, int[] zMode, Params params)
+			throws CloneNotSupportedException {
+		int[] updateZMode = zMode.clone();
+		int tempZModeLower = 0;
+		Set<Integer> zModeSet = new TreeSet<Integer>();
+		for (int i = 0; i < updateZMode.length; i++) {
+			zModeSet.add(updateZMode[i]);
+		}
+		
+		for (Integer elem:zModeSet) {
+			List<DoubleRead> subDoubleReadList = new ArrayList<DoubleRead>();
+			for (int i = 0; i < updateZMode.length; i++) {
+				if (elem.equals(updateZMode[i])) {
+					subDoubleReadList.add(doubleReadList.get(i));
+				}
+			}
+			List<Set<Integer>> subOverlapList = updateOverlap(subDoubleReadList, overlapList);
+			Params tempParams = (Params)params.clone();
+			tempParams.setSeqs(subDoubleReadList.size());
+			int[] subResult = DirichletClusterSingle.dirichletClusterSingle(subDoubleReadList, subOverlapList, tempParams, tempZModeLower);
+			for (int i = 0; i < subResult.length; i++) {
+				updateZMode[subDoubleReadList.get(i).getId()] = subResult[i];
+			}
+		}
+		
+		return updateZMode;
+	}
 
 	public static void mainJob(String inputFile, String outputFile,
 			Params params) throws Exception {
@@ -228,17 +280,42 @@ public class DirichletCluster {
 		char[] charList = { 'A', 'C', 'G', 'T' };
 		List<String> permutationList = getPermutations(charList,
 				params.getTransOrder() + 1);
+
+		List<Set<Integer>> overlapList = EncodeBinTask.encodeMainJob(readList,
+				32);
 		List<DoubleRead> doubleReadList = new ArrayList<DoubleRead>();
 		for (int i = 0; i < params.getSeqs(); i++) {
 			DoubleRead dr = new DoubleRead(i, readList.get(i * 2),
 					readList.get(i * 2 + 1), params.getTransOrder() + 1,
 					permutationList);
-
+			doubleReadList.add(dr);
 		}
-		Collections.sort(doubleReadList, new DoubleReadCompareGC());
-		
-		
+
+		double[] alphaList = { 0.00000001, 0.000001, 0.0001 };
+		int[] zMode = new int[params.getSeqs()];
+		for (int i = 0; i < params.getSeqs(); i++) {
+			zMode[i] = 1;
+		}
+		int oldZModeMax = 1;
+
+		for (int i = 0; i < alphaList.length; i++) {
+			params.setAlpha(alphaList[i]);
+			zMode = dirichletCluster(doubleReadList, overlapList, zMode, params);
+			int zModeMax = oldZModeMax;
+			for (int j = 0; j < zMode.length; j++) {
+				if (zModeMax < zMode[j]) {
+					zModeMax = zMode[j];
+				}
+			}
+			if (oldZModeMax == zModeMax) {
+				break;
+			}
+		}
+
 		PrintWriter pw = new PrintWriter(new FileWriter(new File(outputFile)));
+		for (int i = 0; i < zMode.length; i++) {
+			pw.println(zMode[i]);
+		}
 		pw.close();
 
 	}

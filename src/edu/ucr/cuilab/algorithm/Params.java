@@ -1,6 +1,6 @@
 package edu.ucr.cuilab.algorithm;
 
-public class Params {
+public class Params implements Cloneable {
 
 	private int particles;
 	private int neighbor;
@@ -113,4 +113,8 @@ public class Params {
 		this.zero = zero;
 	}
 	
+	@Override
+	protected Object clone() throws CloneNotSupportedException {
+		return super.clone();
+	}
 }
