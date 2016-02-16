@@ -15,6 +15,8 @@ public class DoubleRead {
 	private List<Integer> accumulateCountList;
 	private double GC;
 	private int[] startWhere;
+	private double[] newGroupStartp;
+	private double[] newGroupTransp;
 
 	public DoubleRead(String readA, String readB, int transOrder,
 			List<String> permutationList) {
@@ -217,6 +219,22 @@ public class DoubleRead {
 
 	public void setStartWhere(int[] startWhere) {
 		this.startWhere = startWhere;
+	}
+
+	public double[] getNewGroupStartp() {
+		return newGroupStartp;
+	}
+
+	public void setNewGroupStartp(double[] newGroupStartp) {
+		this.newGroupStartp = newGroupStartp;
+	}
+
+	public double[] getNewGroupTransp() {
+		return newGroupTransp;
+	}
+
+	public void setNewGroupTransp(double[] newGroupTransp) {
+		this.newGroupTransp = newGroupTransp;
 	}
 
 	@Override
