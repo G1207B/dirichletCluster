@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,8 +82,10 @@ public class DirichletCluster {
 		double zero = DefaultConstants.ZERO;
 		double majority = DefaultConstants.MAJORITY;
 
-		String input = "";
-		String output = "";
+		List<Double> alphaList = new ArrayList<Double>();
+
+		String input = "/home/xinping/Desktop/6008/test.txt";
+		String output = "/home/xinping/Desktop/6008/output.test.txt";
 
 		Date date = new Date();
 
@@ -91,6 +94,7 @@ public class DirichletCluster {
 
 		if (0 == args.length) {
 			printHelp();
+			return;
 		}
 
 		int pos = 0;
@@ -99,9 +103,20 @@ public class DirichletCluster {
 				switch (args[pos].charAt(1)) {
 				case 'a':
 				case 'A':
-					params.setAlpha(parse(DefaultConstants.ALPHA,
-							args[pos + 1], "Parameter alpha"));
-					pos += 2;
+					if (args[pos].length() == 2) {
+						params.setAlpha(parse(DefaultConstants.ALPHA,
+								args[pos + 1], "Parameter alpha"));
+						pos += 2;
+					} else {
+						int alphaListSize = Integer.parseInt(args[pos]
+								.substring(2));
+
+						for (int i = 1; i <= alphaListSize; i++) {
+							alphaList.add(Double.valueOf(pos + i));
+						}
+
+						pos += (alphaListSize + 1);
+					}
 					break;
 				case 'h':
 				case 'H':
@@ -166,13 +181,13 @@ public class DirichletCluster {
 			}
 		}
 
-		mainJob(input, output, params);
+		mainJob(input, output, params, alphaList);
 	}
 
 	public static void printHelp() {
 		System.out.println("Usage: ");
 		System.out.println("\tjava -jar " + DefaultConstants.PACKAGENAME
-				+ " abundance_species_equal.txt");
+				+ " -i abundance_species_equal.txt");
 		System.out.println("The file contains pair-end sequence\n");
 		System.out.println("More Usage: ");
 		System.out.println("\tjava -jar " + DefaultConstants.PACKAGENAME
@@ -181,6 +196,10 @@ public class DirichletCluster {
 		System.out
 				.println("\t-a:\tThe value followed will be the alpha parameter");
 		System.out.println("\t   \tDefault value " + DefaultConstants.ALPHA);
+		System.out
+		.println("\t\tExample 1: -a3 0.0000001 0.00001 0.001");
+		System.out
+		.println("\t\tExample 2: -a 0.0000001");
 		System.out
 				.println("\t-h:\tThe value followed will be the alpha_high parameter");
 		System.out
@@ -240,6 +259,7 @@ public class DirichletCluster {
 				resultList.add(temp);
 			}
 		}
+		Collections.sort(resultList, new ListCompareLength());
 		return resultList;
 	}
 
@@ -252,28 +272,34 @@ public class DirichletCluster {
 		for (int i = 0; i < updateZMode.length; i++) {
 			zModeSet.add(updateZMode[i]);
 		}
-		
-		for (Integer elem:zModeSet) {
+
+		for (Integer elem : zModeSet) {
 			List<DoubleRead> subDoubleReadList = new ArrayList<DoubleRead>();
 			for (int i = 0; i < updateZMode.length; i++) {
 				if (elem.equals(updateZMode[i])) {
 					subDoubleReadList.add(doubleReadList.get(i));
 				}
 			}
-			List<Set<Integer>> subOverlapList = updateOverlap(subDoubleReadList, overlapList);
-			Params tempParams = (Params)params.clone();
+			List<Set<Integer>> subOverlapList = updateOverlap(
+					subDoubleReadList, overlapList);
+			Params tempParams = (Params) params.clone();
 			tempParams.setSeqs(subDoubleReadList.size());
-			int[] subResult = DirichletClusterSingle.dirichletClusterSingle(subDoubleReadList, subOverlapList, tempParams, tempZModeLower);
+			int[] subResult = DirichletClusterSingle.dirichletClusterSingle(
+					subDoubleReadList, subOverlapList, tempParams,
+					tempZModeLower);
 			for (int i = 0; i < subResult.length; i++) {
 				updateZMode[subDoubleReadList.get(i).getId()] = subResult[i];
+				if (subResult[i] > tempZModeLower) {
+					tempZModeLower = subResult[i];
+				}
 			}
 		}
-		
+
 		return updateZMode;
 	}
 
 	public static void mainJob(String inputFile, String outputFile,
-			Params params) throws Exception {
+			Params params, List<Double> alphaList) throws Exception {
 		List<String> readList = readFile(inputFile);
 		params.setSeqs(readList.size() / 2);
 
@@ -289,29 +315,34 @@ public class DirichletCluster {
 					readList.get(i * 2 + 1), params.getTransOrder() + 1,
 					permutationList);
 			doubleReadList.add(dr);
+			// dr.outputCountList();
 		}
 
-		double[] alphaList = { 0.00000001, 0.000001, 0.0001 };
 		int[] zMode = new int[params.getSeqs()];
 		for (int i = 0; i < params.getSeqs(); i++) {
 			zMode[i] = 1;
 		}
 		int oldZModeMax = 1;
 
-		for (int i = 0; i < alphaList.length; i++) {
-			params.setAlpha(alphaList[i]);
-			zMode = dirichletCluster(doubleReadList, overlapList, zMode, params);
-			int zModeMax = oldZModeMax;
-			for (int j = 0; j < zMode.length; j++) {
-				if (zModeMax < zMode[j]) {
-					zModeMax = zMode[j];
+		if (alphaList.size() > 0) {
+
+			for (int i = 0; i < alphaList.size(); i++) {
+				params.setAlpha(alphaList.get(i));
+				zMode = dirichletCluster(doubleReadList, overlapList, zMode,
+						params);
+				int zModeMax = oldZModeMax;
+				for (int j = 0; j < zMode.length; j++) {
+					if (zModeMax < zMode[j]) {
+						zModeMax = zMode[j];
+					}
+				}
+				if (oldZModeMax == zModeMax) {
+					break;
 				}
 			}
-			if (oldZModeMax == zModeMax) {
-				break;
-			}
+		} else {
+			zMode = dirichletCluster(doubleReadList, overlapList, zMode, params);
 		}
-
 		PrintWriter pw = new PrintWriter(new FileWriter(new File(outputFile)));
 		for (int i = 0; i < zMode.length; i++) {
 			pw.println(zMode[i]);

@@ -1,12 +1,12 @@
 package edu.ucr.cuilab.algorithm;
 
 import java.util.Comparator;
-import java.util.List;
+import java.util.Set;
 
-public class ListCompareLength implements Comparator<List<Integer>> {
+public class ListCompareLength implements Comparator<Set<Integer>> {
 
 	@Override
-	public int compare(List<Integer> arg0, List<Integer> arg1) {
+	public int compare(Set<Integer> arg0, Set<Integer> arg1) {
 		if (arg0.size() > arg1.size()) {
 			return -1;
 		} else {

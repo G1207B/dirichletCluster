@@ -3,7 +3,6 @@ package edu.ucr.cuilab.algorithm;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -16,33 +15,47 @@ public class DirichletClusterSingle {
 		for (int i = 0; i < doubleReadList.size(); i++) {
 			int nflag = 1;
 			int pflag = 1;
-			List<Integer> accumCountList = doubleReadList.get(i).getCountList();
+			List<Integer> accumCountList = new ArrayList<Integer>(doubleReadList.get(i).getCountList());
+//			System.out.println(accumCountList.toString());
 
 			while ((nflag <= neighbor / 2) && (i - nflag >= 0)) {
 				List<Integer> temp = doubleReadList.get(i - nflag)
 						.getCountList();
+//				System.out.println("COUNT");
+//				System.out.println(temp.toString());
 				for (int j = 0; j < accumCountList.size(); j++) {
 					accumCountList.set(j, accumCountList.get(j) + temp.get(j));
 				}
+//				System.out.println("ACCUM");
+//				System.out.println(accumCountList.toString());
 				nflag++;
 			}
 
 			while ((pflag <= neighbor / 2)
-					&& (i + nflag < doubleReadList.size())) {
+					&& (i + pflag < doubleReadList.size())) {
 				List<Integer> temp = doubleReadList.get(i + pflag)
 						.getCountList();
+//				System.out.println("COUNT");
+//				System.out.println(temp.toString());
 				for (int j = 0; j < accumCountList.size(); j++) {
 					accumCountList.set(j, accumCountList.get(j) + temp.get(j));
 				}
+//				System.out.println("ACCUM");
+//				System.out.println(accumCountList.toString());
 				pflag++;
 			}
 
+			doubleReadList.get(i).setAccumulateCountList(accumCountList);
 			doubleReadList.get(i).setNewGroupStartp(
 					startPCounts(accumCountList));
 			doubleReadList.get(i).setNewGroupTransp(
 					transPCounts(accumCountList));
+//			doubleReadList.get(i).outputStartp();
 		}
 		Collections.sort(doubleReadList, new DoubleReadCompareID());
+//		doubleReadList.get(0).outputStartp();
+//		doubleReadList.get(0).outputAccum();
+//		return doubleReadList;
 	}
 
 	// return {mode, length of mode}
@@ -123,7 +136,13 @@ public class DirichletClusterSingle {
 		}
 		for (int i = 0; i < particles; i++) {
 			Map<Integer, Integer> groupMap = groupCol(z, i);
-			Integer[] groupCol = (Integer[]) groupMap.keySet().toArray();
+			int[] groupCol = new int[groupMap.keySet().size()];
+			int temp = 0;
+			for (Integer id:groupMap.keySet()) {
+				groupCol[temp] = id;
+				temp++;
+			}
+			//Integer[] groupCol = (Integer[]) groupMap.keySet().toArray();
 			for (int j = 0; j < group + 1; j++) {
 				pList[i][j] = w[i] * alpha / (alpha + seqIndex - 1)
 						/ (group + 1 - groupCol.length);
@@ -194,7 +213,7 @@ public class DirichletClusterSingle {
 
 	private static double[][][] startP(List<DoubleRead> doubleReadList,
 			int seqIndex, int[][] z, int particles) {
-		int group = max(z) + 1;
+		int group = max(z);
 		double[][][] p = new double[particles][group + 1][];
 		double[] newStartP = doubleReadList.get(seqIndex).getNewGroupStartp();
 		for (int k = 0; k < particles; k++) {
@@ -231,7 +250,7 @@ public class DirichletClusterSingle {
 	private static double[][][] transP(List<DoubleRead> doubleReadList,
 			int seqIndex, int[][] z, int particles) {
 
-		int group = max(z) + 1;
+		int group = max(z);
 		double[] newTransP = doubleReadList.get(seqIndex).getNewGroupTransp();
 		double[][][] p = new double[particles][group + 1][];
 		for (int k = 0; k < particles; k++) {
@@ -262,6 +281,11 @@ public class DirichletClusterSingle {
 
 			}
 			p[k][group] = newTransP;
+//			for (double tempP:p[k][group]) {
+//				System.out.print(tempP);
+//				System.out.print('\t');
+//			}
+//			System.out.println();
 		}
 
 		return p;
@@ -270,7 +294,7 @@ public class DirichletClusterSingle {
 	private static double[] postPTemp(List<DoubleRead> doubleReadList,
 			int seqIndex, int[][] z, double[] w, int particles) {
 
-		int group = max(z) + 1;
+		int group = max(z);
 		double[][][] tempTransP = transP(doubleReadList, seqIndex, z, particles);
 		double[][][] tempStartP = startP(doubleReadList, seqIndex, z, particles);
 
@@ -307,6 +331,8 @@ public class DirichletClusterSingle {
 				} else {
 					p[k][j] = 0.0;
 				}
+//				System.out.println(sumTempStartP);
+//				System.out.println(sumTempTransP);
 			}
 		}
 
@@ -321,11 +347,12 @@ public class DirichletClusterSingle {
 
 	private static double[] postP(List<DoubleRead> doubleReadList,
 			int seqIndex, int[][] z, double[] w, int particles, double alpha) {
-		int group = max(z) + 1;
+		int group = max(z);
 		double[] p = new double[group + 1];
 		double[] tempPostP = postPTemp(doubleReadList, seqIndex, z, w,
 				particles);
 		double[] tempPriorP = priorP(seqIndex, z, w, particles, alpha);
+
 		double sum = 0.0;
 		for (int i = 0; i < p.length; i++) {
 			p[i] = tempPostP[i] * tempPriorP[i];
@@ -337,24 +364,29 @@ public class DirichletClusterSingle {
 		for (int i = 0; i < p.length; i++) {
 			p[i] /= sum;
 		}
+
+//		System.out.println(p.toString());
 		return p;
 	}
 
-	private static int[] sampleInt(double[] probList, int particles) {
+	private static int[] sampleInt(double[] probList, int particles, int start) {
 		int[] samples = new int[particles];
 		double[] accumList = new double[probList.length];
 		accumList[0] = probList[0];
 		for (int i = 1; i < probList.length; i++) {
 			accumList[i] = probList[i] + accumList[i - 1];
 		}
+		for (int i = 0; i < probList.length; i++) {
+			accumList[i] = accumList[i] / accumList[probList.length - 1];
+		}
 		Random rand = new Random();
 		for (int i = 0; i < particles; i++) {
 			double r = rand.nextDouble();
 			int j = 0;
-			while ((accumList[j] < r) && (j < accumList.length)) {
+			while ((j < accumList.length) && (accumList[j] < r)) {
 				j++;
 			}
-			samples[i] = j + 1;
+			samples[i] = j + start;
 		}
 		return samples;
 	}
@@ -363,7 +395,9 @@ public class DirichletClusterSingle {
 			int seqIndex, int[][] z, double[] w, int particles, double alpha) {
 		double[] posterior = postP(doubleReadList, seqIndex, z, w, particles,
 				alpha);
-		int[] sample = sampleInt(posterior, particles);
+		int[] sample = sampleInt(posterior, particles, 1);
+
+//		System.out.println(posterior.toString());
 
 		return sample;
 	}
@@ -429,11 +463,16 @@ public class DirichletClusterSingle {
 			}
 		}
 
+		System.out.println("DirichletClusterSingle: before newGroup");
+		
 		newGroup(doubleReadList, params.getNeighbor());
+		
+		System.out.println("DirichletClusterSingle: after newGroup");
 
 		List<Set<Integer>> rmList = new ArrayList<Set<Integer>>();
 
 		for (int i = 1; i < overlapList.size(); i++) {
+			System.out.println("Overlap: " + i);
 			if (overlapList.get(i).size() > 1) {
 				int[][] tempZLower = clusterOverlapSeqs(doubleReadList,
 						overlapList.get(i), z, w, params.getParticles(),
@@ -445,20 +484,31 @@ public class DirichletClusterSingle {
 						params.getMajority());
 				boolean isMarjorityUpper = checkMajorityVote(tempZUpper,
 						params.getMajority());
-				int majorityVoteLower = getMode(getMode(tempZLower))[0];
-				int majorityVoteUpper = getMode(getMode(tempZUpper))[0];
-
+				int[] voteLower = getMode(getMode(tempZLower));
+				int[] voteUpper = getMode(getMode(tempZUpper)); 
+				int majorityVoteLower = voteLower[0];
+				int majorityVoteUpper = voteUpper[0];
+//				System.out.print(voteLower[0]);
+//				System.out.print("\t");
+//				System.out.print(voteLower[1]);
+//				System.out.print("\t");
+//				System.out.print(voteUpper[0]);
+//				System.out.print("\t");
+//				System.out.println(voteUpper[1]);
 				if (isMarjorityLower && isMarjorityUpper
 						&& (majorityVoteLower == majorityVoteUpper)) {
-					for (int j = 0; j < overlapList.get(i).size(); j++) {
+					for (Integer j:overlapList.get(i)) {
 						for (int k = 0; k < params.getParticles(); k++) {
 							z[j][k] = majorityVoteLower;
 						}
 					}
+//					System.out.println("Succeed");
 				} else {
 					rmList.add(overlapList.get(i));
+//					System.out.println("Remove");
 				}
 			} else {
+
 				for (Integer elem : overlapList.get(i)) {
 					z[elem] = clusterOneSeq(doubleReadList, elem, z, w,
 							params.getParticles(), params.getAlpha());
@@ -471,7 +521,7 @@ public class DirichletClusterSingle {
 					if (eff > 1 / (params.getThreshold() * params
 							.getParticles())) {
 						int[] resampleIndex = sampleInt(w,
-								params.getParticles());
+								params.getParticles(), 0);
 						int[] temp = new int[params.getParticles()];
 						for (int j = 0; j < params.getParticles(); j++) {
 							w[j] = 1.0 / (0.0 + params.getParticles());
@@ -480,9 +530,13 @@ public class DirichletClusterSingle {
 						z[elem] = temp;
 					}
 				}
+				
+//				System.out.println("Single");
 			}
 		}
 
+		System.out.println("Begin to process removed seqs");
+		
 		for (Set<Integer> seqList : rmList) {
 			int[][] tempZ = clusterOverlapSeqs(doubleReadList, seqList, z, w,
 					params.getParticles(), params.getAlpha());
@@ -493,6 +547,8 @@ public class DirichletClusterSingle {
 				}
 			}
 		}
+		
+		System.out.println("Finish");
 
 		int[] result = getMode(z);
 		for (int i = 0; i < result.length; i++) {

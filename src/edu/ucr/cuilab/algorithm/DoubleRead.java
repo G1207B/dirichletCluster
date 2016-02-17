@@ -38,6 +38,40 @@ public class DoubleRead {
 		calculateGC();
 		calculateStartWhere();
 	}
+	
+	public void outputAccum() {
+		if (accumulateCountList.size() > 0) {
+			for (Integer i:accumulateCountList) {
+				System.out.print(i);
+				System.out.print('\t');
+			}
+			System.out.println();
+		} else {
+			System.out.println("No elements");
+		}
+	}
+	
+	public void outputStartp() {
+		if (newGroupStartp.length > 0) {
+			for (double d:newGroupStartp) {
+				System.out.print(d);
+				System.out.print('\t');
+			}
+			System.out.println();
+		}
+	}
+	
+	public void outputCountList() {
+		if (countList.size() > 0) {
+			for (Integer i:countList) {
+				System.out.print(i);
+				System.out.print('\t');
+			}
+			System.out.println();
+		} else {
+			System.out.println("No elements");
+		}
+	}
 
 	private int getStartPoint(char c, boolean origin) {
 		int startWhere = 0;

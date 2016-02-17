@@ -2,7 +2,7 @@ package edu.ucr.cuilab.algorithm;
 
 public interface DefaultConstants {
 	
-	public final static String PACKAGENAME = "SMCbeta.jar";
+	public final static String PACKAGENAME = "DirichletCluster.jar";
 	
 	public final static int TRANSORDER = 1;
 	public final static int PARTICLES = 100;
