@@ -7,8 +7,10 @@ public class DoubleReadCompareGC implements Comparator<DoubleRead> {
 	public int compare(DoubleRead arg0, DoubleRead arg1) {
 		if (arg0.getGC() > arg1.getGC()) {
 			return 1;
-		} else {
+		} else if (arg0.getGC() < arg1.getGC()){
 			return -1;
+		} else {
+			return 0;
 		}
 	}
 }

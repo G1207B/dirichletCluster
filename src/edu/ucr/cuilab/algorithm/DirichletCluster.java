@@ -94,7 +94,10 @@ public class DirichletCluster {
 
 		if (0 == args.length) {
 			printHelp();
-			return;
+			alphaList.add(0.00000001);
+			alphaList.add(0.000001);
+			alphaList.add(0.0001);
+			//return;
 		}
 
 		int pos = 0;
@@ -273,6 +276,8 @@ public class DirichletCluster {
 			zModeSet.add(updateZMode[i]);
 		}
 
+		//System.out.println(zModeSet.toString());
+		
 		for (Integer elem : zModeSet) {
 			List<DoubleRead> subDoubleReadList = new ArrayList<DoubleRead>();
 			for (int i = 0; i < updateZMode.length; i++) {
@@ -289,10 +294,12 @@ public class DirichletCluster {
 					tempZModeLower);
 			for (int i = 0; i < subResult.length; i++) {
 				updateZMode[subDoubleReadList.get(i).getId()] = subResult[i];
+				//System.out.println(subDoubleReadList.get(i).getId());
 				if (subResult[i] > tempZModeLower) {
 					tempZModeLower = subResult[i];
 				}
 			}
+			//System.out.println(tempZModeLower);
 		}
 
 		return updateZMode;
@@ -315,7 +322,6 @@ public class DirichletCluster {
 					readList.get(i * 2 + 1), params.getTransOrder() + 1,
 					permutationList);
 			doubleReadList.add(dr);
-			// dr.outputCountList();
 		}
 
 		int[] zMode = new int[params.getSeqs()];
@@ -328,6 +334,7 @@ public class DirichletCluster {
 
 			for (int i = 0; i < alphaList.size(); i++) {
 				params.setAlpha(alphaList.get(i));
+//				System.out.println(alphaList.get(i));
 				zMode = dirichletCluster(doubleReadList, overlapList, zMode,
 						params);
 				int zModeMax = oldZModeMax;
@@ -339,6 +346,7 @@ public class DirichletCluster {
 				if (oldZModeMax == zModeMax) {
 					break;
 				}
+				oldZModeMax = zModeMax;
 			}
 		} else {
 			zMode = dirichletCluster(doubleReadList, overlapList, zMode, params);

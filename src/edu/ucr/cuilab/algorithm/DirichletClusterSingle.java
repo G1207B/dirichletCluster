@@ -463,16 +463,18 @@ public class DirichletClusterSingle {
 			}
 		}
 
-		System.out.println("DirichletClusterSingle: before newGroup");
-		
+//		System.out.println("DirichletClusterSingle: before newGroup");
+//		for (DoubleRead dr:doubleReadList) {
+//			System.out.println(dr.getGC());
+//		}
 		newGroup(doubleReadList, params.getNeighbor());
 		
-		System.out.println("DirichletClusterSingle: after newGroup");
+//		System.out.println("DirichletClusterSingle: after newGroup");
 
 		List<Set<Integer>> rmList = new ArrayList<Set<Integer>>();
 
 		for (int i = 1; i < overlapList.size(); i++) {
-			System.out.println("Overlap: " + i);
+			//System.out.println("Overlap: " + i);
 			if (overlapList.get(i).size() > 1) {
 				int[][] tempZLower = clusterOverlapSeqs(doubleReadList,
 						overlapList.get(i), z, w, params.getParticles(),
@@ -535,7 +537,7 @@ public class DirichletClusterSingle {
 			}
 		}
 
-		System.out.println("Begin to process removed seqs");
+//		System.out.println("Begin to process removed seqs");
 		
 		for (Set<Integer> seqList : rmList) {
 			int[][] tempZ = clusterOverlapSeqs(doubleReadList, seqList, z, w,
@@ -548,7 +550,7 @@ public class DirichletClusterSingle {
 			}
 		}
 		
-		System.out.println("Finish");
+//		System.out.println("Finish");
 
 		int[] result = getMode(z);
 		for (int i = 0; i < result.length; i++) {
