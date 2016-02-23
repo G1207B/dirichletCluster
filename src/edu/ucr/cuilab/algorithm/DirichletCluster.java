@@ -94,9 +94,9 @@ public class DirichletCluster {
 
 		if (0 == args.length) {
 			printHelp();
-			alphaList.add(0.00000001);
-			alphaList.add(0.000001);
-			alphaList.add(0.0001);
+			//alphaList.add(0.00000001);
+			//alphaList.add(0.000001);
+			//alphaList.add(0.0001);
 			//return;
 		}
 
@@ -275,16 +275,22 @@ public class DirichletCluster {
 		for (int i = 0; i < updateZMode.length; i++) {
 			zModeSet.add(updateZMode[i]);
 		}
-
-		//System.out.println(zModeSet.toString());
+		System.out.print("updateZMode");
+		for (int i = 0; i < updateZMode.length; i++) {
+			System.out.print(" ");
+			System.out.print(updateZMode[i]);
+		}
+		System.out.println();
+		System.out.println(zModeSet.toString());
 		
 		for (Integer elem : zModeSet) {
 			List<DoubleRead> subDoubleReadList = new ArrayList<DoubleRead>();
-			for (int i = 0; i < updateZMode.length; i++) {
-				if (elem.equals(updateZMode[i])) {
+			for (int i = 0; i < zMode.length; i++) {
+				if (elem.equals(zMode[i])) {
 					subDoubleReadList.add(doubleReadList.get(i));
 				}
 			}
+			System.out.println("subLength = " + subDoubleReadList.size());
 			List<Set<Integer>> subOverlapList = updateOverlap(
 					subDoubleReadList, overlapList);
 			Params tempParams = (Params) params.clone();
@@ -292,16 +298,24 @@ public class DirichletCluster {
 			int[] subResult = DirichletClusterSingle.dirichletClusterSingle(
 					subDoubleReadList, subOverlapList, tempParams,
 					tempZModeLower);
+			System.out.print("subResult");
 			for (int i = 0; i < subResult.length; i++) {
 				updateZMode[subDoubleReadList.get(i).getId()] = subResult[i];
-				//System.out.println(subDoubleReadList.get(i).getId());
+				System.out.print(" ");
+				System.out.print(subDoubleReadList.get(i).getId());
 				if (subResult[i] > tempZModeLower) {
 					tempZModeLower = subResult[i];
 				}
 			}
-			//System.out.println(tempZModeLower);
+			System.out.println();
 		}
 
+		System.out.print("updateZMode");
+		for (int i = 0; i < updateZMode.length; i++) {
+			System.out.print(" ");
+			System.out.print(updateZMode[i]);
+		}
+		System.out.println();
 		return updateZMode;
 	}
 
