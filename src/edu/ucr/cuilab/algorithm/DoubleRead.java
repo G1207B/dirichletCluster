@@ -1,6 +1,7 @@
 package edu.ucr.cuilab.algorithm;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -37,6 +38,26 @@ public class DoubleRead {
 		fillCountList(permutationList);
 		calculateGC();
 		calculateStartWhere();
+	}
+	
+	public void printStartWhere() {
+		System.out.println(Arrays.toString(startWhere));
+	}
+	
+	public void printStartp() {
+		System.out.println(Arrays.toString(newGroupStartp));
+	}
+	
+	public void printTransp() {
+		System.out.println(Arrays.toString(newGroupTransp));
+	}
+	
+	public void printCountList() {
+		System.out.println(countList.toString());
+	}
+	
+	public void printAccumList() {
+		System.out.println(accumulateCountList.toString());
 	}
 	
 	public void outputAccum() {

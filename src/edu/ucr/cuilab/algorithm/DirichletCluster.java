@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -84,7 +85,7 @@ public class DirichletCluster {
 
 		List<Double> alphaList = new ArrayList<Double>();
 
-		String input = "/home/xinping/Desktop/6008/test.txt";
+		String input = "/home/xinping/Desktop/6008/5_2345Borr.txt";
 		String output = "/home/xinping/Desktop/6008/output.test.txt";
 
 		Date date = new Date();
@@ -97,7 +98,7 @@ public class DirichletCluster {
 			//alphaList.add(0.00000001);
 			//alphaList.add(0.000001);
 			//alphaList.add(0.0001);
-			//return;
+			return;
 		}
 
 		int pos = 0;
@@ -275,13 +276,14 @@ public class DirichletCluster {
 		for (int i = 0; i < updateZMode.length; i++) {
 			zModeSet.add(updateZMode[i]);
 		}
-		System.out.print("updateZMode");
-		for (int i = 0; i < updateZMode.length; i++) {
-			System.out.print(" ");
-			System.out.print(updateZMode[i]);
-		}
-		System.out.println();
-		System.out.println(zModeSet.toString());
+
+//		System.out.print("updateZMode");
+//		for (int i = 0; i < updateZMode.length; i++) {
+//			System.out.print(" ");
+//			System.out.print(updateZMode[i]);
+//		}
+//		System.out.println();
+//		System.out.println(zModeSet.toString());
 		
 		for (Integer elem : zModeSet) {
 			List<DoubleRead> subDoubleReadList = new ArrayList<DoubleRead>();
@@ -290,32 +292,31 @@ public class DirichletCluster {
 					subDoubleReadList.add(doubleReadList.get(i));
 				}
 			}
-			System.out.println("subLength = " + subDoubleReadList.size());
+//			System.out.println("subLength = " + subDoubleReadList.size());
 			List<Set<Integer>> subOverlapList = updateOverlap(
 					subDoubleReadList, overlapList);
 			Params tempParams = (Params) params.clone();
 			tempParams.setSeqs(subDoubleReadList.size());
+
 			int[] subResult = DirichletClusterSingle.dirichletClusterSingle(
 					subDoubleReadList, subOverlapList, tempParams,
 					tempZModeLower);
-			System.out.print("subResult");
+
+			
+//			System.out.print("subResult");
 			for (int i = 0; i < subResult.length; i++) {
 				updateZMode[subDoubleReadList.get(i).getId()] = subResult[i];
-				System.out.print(" ");
-				System.out.print(subDoubleReadList.get(i).getId());
+//				System.out.print(" ");
+//				System.out.print(subDoubleReadList.get(i).getId());
 				if (subResult[i] > tempZModeLower) {
 					tempZModeLower = subResult[i];
 				}
 			}
-			System.out.println();
+//			System.out.println();
 		}
 
 		System.out.print("updateZMode");
-		for (int i = 0; i < updateZMode.length; i++) {
-			System.out.print(" ");
-			System.out.print(updateZMode[i]);
-		}
-		System.out.println();
+		System.out.println(Arrays.toString(updateZMode));
 		return updateZMode;
 	}
 
@@ -330,12 +331,18 @@ public class DirichletCluster {
 
 		List<Set<Integer>> overlapList = EncodeBinTask.encodeMainJob(readList,
 				32);
+		
+//		for (Set<Integer> overlapSet:overlapList) {
+//			System.out.println(overlapSet.toString());
+//		}
+		
 		List<DoubleRead> doubleReadList = new ArrayList<DoubleRead>();
 		for (int i = 0; i < params.getSeqs(); i++) {
 			DoubleRead dr = new DoubleRead(i, readList.get(i * 2),
 					readList.get(i * 2 + 1), params.getTransOrder() + 1,
 					permutationList);
 			doubleReadList.add(dr);
+//			dr.printCountList();
 		}
 
 		int[] zMode = new int[params.getSeqs()];
