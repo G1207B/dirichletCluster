@@ -84,8 +84,8 @@ public class DirichletCluster {
 		double majority = DefaultConstants.MAJORITY;
 
 		List<Double> alphaList = new ArrayList<Double>();
-
-		String input = "/home/xinping/Desktop/6008/5_2345Borr.txt";
+		String input = "/home/xinping/Desktop/6008/test.txt";
+//		String input = "/home/xinping/Desktop/6008/5_2345Borr.txt";
 		String output = "/home/xinping/Desktop/6008/output.test.txt";
 
 		Date date = new Date();
@@ -95,10 +95,11 @@ public class DirichletCluster {
 
 		if (0 == args.length) {
 			printHelp();
-			//alphaList.add(0.00000001);
-			//alphaList.add(0.000001);
-			//alphaList.add(0.0001);
-			return;
+//			alphaList.add(0.00000001);
+//			alphaList.add(0.000001);
+			alphaList.add(0.0001);
+			alphaList.add(0.1);
+//			return;
 		}
 
 		int pos = 0;
@@ -116,7 +117,7 @@ public class DirichletCluster {
 								.substring(2));
 
 						for (int i = 1; i <= alphaListSize; i++) {
-							alphaList.add(Double.valueOf(pos + i));
+							alphaList.add(Double.valueOf(args[pos + i]));
 						}
 
 						pos += (alphaListSize + 1);
@@ -313,10 +314,12 @@ public class DirichletCluster {
 				}
 			}
 //			System.out.println();
+			System.out.println("subResult");
+			System.out.println(tempParams.getAlpha());
+			System.out.println(elem);
+			System.out.println(tempZModeLower);
+			System.out.println(Arrays.toString(subResult));
 		}
-
-		System.out.print("updateZMode");
-		System.out.println(Arrays.toString(updateZMode));
 		return updateZMode;
 	}
 
@@ -364,9 +367,12 @@ public class DirichletCluster {
 						zModeMax = zMode[j];
 					}
 				}
-				if (oldZModeMax == zModeMax) {
-					break;
-				}
+				
+				System.out.println(params.getAlpha());
+				
+//				if (oldZModeMax == zModeMax) {
+//					break;
+//				}
 				oldZModeMax = zModeMax;
 			}
 		} else {
