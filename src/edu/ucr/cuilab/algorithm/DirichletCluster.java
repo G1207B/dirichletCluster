@@ -84,7 +84,8 @@ public class DirichletCluster {
 		double majority = DefaultConstants.MAJORITY;
 
 		List<Double> alphaList = new ArrayList<Double>();
-		String input = "/home/xinping/Desktop/6008/test.txt";
+		String input = "/home/xinping/Desktop/6008/5_2345Borr.txt.sample";
+//		String input = "/home/xinping/Desktop/6008/test.txt";
 //		String input = "/home/xinping/Desktop/6008/5_2345Borr.txt";
 		String output = "/home/xinping/Desktop/6008/output.test.txt";
 
@@ -97,9 +98,9 @@ public class DirichletCluster {
 			printHelp();
 //			alphaList.add(0.00000001);
 //			alphaList.add(0.000001);
-			alphaList.add(0.0001);
-			alphaList.add(0.1);
-//			return;
+//			alphaList.add(0.0001);
+//			alphaList.add(0.1);
+			return;
 		}
 
 		int pos = 0;

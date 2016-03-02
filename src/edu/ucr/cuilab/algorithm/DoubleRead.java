@@ -26,6 +26,7 @@ public class DoubleRead {
 		this.transOrder = transOrder;
 		fillCountList(permutationList);
 		calculateGC();
+//		calculateGCTest();
 		calculateStartWhere();
 	}
 
@@ -37,32 +38,33 @@ public class DoubleRead {
 		this.transOrder = transOrder;
 		fillCountList(permutationList);
 		calculateGC();
+//		calculateGCTest();
 		calculateStartWhere();
 	}
-	
+
 	public void printStartWhere() {
 		System.out.println(Arrays.toString(startWhere));
 	}
-	
+
 	public void printStartp() {
 		System.out.println(Arrays.toString(newGroupStartp));
 	}
-	
+
 	public void printTransp() {
 		System.out.println(Arrays.toString(newGroupTransp));
 	}
-	
+
 	public void printCountList() {
 		System.out.println(countList.toString());
 	}
-	
+
 	public void printAccumList() {
 		System.out.println(accumulateCountList.toString());
 	}
-	
+
 	public void outputAccum() {
 		if (accumulateCountList.size() > 0) {
-			for (Integer i:accumulateCountList) {
+			for (Integer i : accumulateCountList) {
 				System.out.print(i);
 				System.out.print('\t');
 			}
@@ -71,20 +73,20 @@ public class DoubleRead {
 			System.out.println("No elements");
 		}
 	}
-	
+
 	public void outputStartp() {
 		if (newGroupStartp.length > 0) {
-			for (double d:newGroupStartp) {
+			for (double d : newGroupStartp) {
 				System.out.print(d);
 				System.out.print('\t');
 			}
 			System.out.println();
 		}
 	}
-	
+
 	public void outputCountList() {
 		if (countList.size() > 0) {
-			for (Integer i:countList) {
+			for (Integer i : countList) {
 				System.out.print(i);
 				System.out.print('\t');
 			}
@@ -155,6 +157,40 @@ public class DoubleRead {
 			}
 		}
 		GC = (gcCount + 0.0) / (readA.length() + readB.length());
+	}
+
+	private void calculateGCTest() {
+		double gcCount = 0.0;
+		char[] charList = readA.toUpperCase().toCharArray();
+		for (int i = 1; i < charList.length - 1; i++) {
+			if (('C' == charList[i]) || ('G' == charList[i])) {
+				gcCount += 1.0;
+			}
+		}
+
+		if (('C' == charList[0]) || ('G' == charList[0])) {
+			gcCount += 0.5;
+		}
+		if (('C' == charList[charList.length - 1])
+				|| ('G' == charList[charList.length - 1])) {
+			gcCount += 0.5;
+		}
+
+		charList = readB.toUpperCase().toCharArray();
+		for (int i = 1; i < charList.length - 1; i++) {
+			if (('C' == charList[i]) || ('G' == charList[i])) {
+				gcCount += 1.0;
+			}
+		}
+
+		if (('C' == charList[0]) || ('G' == charList[0])) {
+			gcCount += 0.5;
+		}
+		if (('C' == charList[charList.length - 1])
+				|| ('G' == charList[charList.length - 1])) {
+			gcCount += 0.5;
+		}
+		GC = gcCount / (readA.length() + readB.length() - 2);
 	}
 
 	public String getTransReverse(String origin) {

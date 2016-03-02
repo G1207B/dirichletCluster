@@ -16,8 +16,8 @@ import java.util.TreeSet;
 
 public class EncodeBinTask {
 
-	public static String FILENAME = "/home/xinping/Desktop/6008/abundance_species_equal.txt";
-	public static String OUTPUT = "/home/xinping/Desktop/6008/encodeBin.test";
+	public static String FILENAME = "/home/xinping/Desktop/6008/5_2345Borr.txt.sample";
+	public static String OUTPUT = FILENAME + ".overlap";
 
 	public static void printUsage() {
 		System.out
@@ -220,6 +220,55 @@ public class EncodeBinTask {
 		return idSetList;
 	}
 	
+	public static void mainJob(List<String> strList, int wLen, PrintWriter pw)
+			throws IOException {
+		List<Set<Integer>> idSetList = new ArrayList<Set<Integer>>();
+		List<Set<Long>> encodeSetList = new ArrayList<Set<Long>>();
+
+		for (int i = 0; i < strList.size() / 2; i++) {
+			Set<Long> encodeSet = stringEncode(strList.get(i * 2), wLen);
+			encodeSet.addAll(stringEncode(strList.get(i * 2 + 1), wLen));
+
+			boolean flag = false;
+
+			for (int j = 0; j < encodeSetList.size(); j++) {
+				for (Long l : encodeSet) {
+					if (encodeSetList.get(j).contains(l)) {
+						encodeSetList.get(j).addAll(encodeSet);
+						idSetList.get(j).add(i);
+						flag = true;
+						break;
+					}
+				}
+				if (flag) {
+					break;
+				}
+			}
+
+			if (!flag) {
+				Set<Integer> idSet = new TreeSet<Integer>();
+				idSet.add(i);
+				idSetList.add(idSet);
+				encodeSetList.add(encodeSet);
+			}
+		}
+
+		Collections.sort(idSetList, new Comparator<Set<Integer>>() {
+			public int compare(Set<Integer> a1, Set<Integer> a2) {
+				return a2.size() - a1.size(); // assumes you want biggest to
+												// smallest
+			}
+		});
+
+		for (int i = 0; i < idSetList.size(); i++) {
+			for (Integer temp : idSetList.get(i)) {
+				pw.print("\t");
+				pw.print(temp);
+			}
+			pw.println();
+		}
+	}
+	
 	public static void mainJob(List<String> strList, int wLen)
 			throws IOException {
 		List<Set<Integer>> idSetList = new ArrayList<Set<Integer>>();
@@ -290,6 +339,17 @@ public class EncodeBinTask {
 		// TODO Auto-generated method stub
 		if (args.length < 1) {
 			printUsage();
+			BufferedReader br = new BufferedReader(new FileReader(new File(
+					FILENAME)));
+			List<String> strList = new ArrayList<String>();
+			String line = null;
+			while (null != (line = br.readLine())) {
+				strList.add(line);
+			}
+			br.close();
+			PrintWriter pw = new PrintWriter(new FileWriter(new File(OUTPUT)));
+			mainJob(strList, 32, pw);
+			pw.close();
 		} else {
 			BufferedReader br = new BufferedReader(new FileReader(new File(
 					args[0])));
