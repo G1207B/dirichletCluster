@@ -16,6 +16,20 @@ public class Params implements Cloneable {
 	public Params() {
 		super();
 	}
+	
+	public Params(Params param) {
+		super();
+		this.particles = param.getParticles();
+		this.neighbor = param.getNeighbor();
+		this.seqs = param.getSeqs();
+		this.transOrder = param.getTransOrder();
+		this.majority = param.getMajority();
+		this.threshold = param.getThreshold();
+		this.alpha = param.getAlpha();
+		this.alphaLow = param.getAlphaLow();
+		this.alphaHigh = param.getAlphaHigh();
+		this.zero = param.getZero();
+	}
 
 	public Params(int particles, int neighbor, int seqs, int transOrder,
 			double majority, double threshold, double alpha, double alphaLow,

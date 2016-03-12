@@ -2,7 +2,7 @@ package edu.ucr.cuilab.algorithm;
 
 public interface DefaultConstants {
 	
-	public final static String PACKAGENAME = "DirichletClusterV1.jar";
+	public final static String PACKAGENAME = "DirichletClusterV2.2.jar";
 	
 	public final static int TRANSORDER = 1;
 	public final static int PARTICLES = 100;
@@ -16,4 +16,7 @@ public interface DefaultConstants {
 	
 	public final static int WLEN = 32;
 	
+	public final static double COVERAGE = 0.9;
+	
+	public final static int TESTNUM = 1000;
 }
