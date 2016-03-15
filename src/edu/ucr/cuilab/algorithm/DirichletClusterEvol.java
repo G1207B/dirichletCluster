@@ -85,8 +85,8 @@ public class DirichletClusterEvol {
 		double majority = DefaultConstants.MAJORITY;
 
 		List<Double> alphaList = new ArrayList<Double>();
-		//String input = "/home/xinping/Desktop/6008/5_2345Borr.txt.sample";
-		// String input = "/home/xinping/Desktop/6008/test.txt";
+		// String input = "/home/xinping/Desktop/6008/5_2345Borr.txt.sample";
+		// String input = "/home/xinping/Desktop/6008/5_test.txt";
 		String input = "/home/xinping/Desktop/6008/5_2345Borr.txt";
 		String output = null;
 
@@ -101,34 +101,17 @@ public class DirichletClusterEvol {
 			alphaList.add(0.000001);
 			// alphaList.add(0.000075);
 			// alphaList.add(0.1);
-			// return;
+			return;
 		}
 
 		int pos = 0;
 		while (pos < args.length - 1) {
 			if (args[pos].charAt(0) == '-') {
 				switch (args[pos].charAt(1)) {
-				case 'a':
-				case 'A':
-					if (args[pos].length() == 2) {
-						params.setAlpha(parse(DefaultConstants.ALPHA,
-								args[pos + 1], "Parameter alpha"));
-						pos += 2;
-					} else {
-						int alphaListSize = Integer.parseInt(args[pos]
-								.substring(2));
-
-						for (int i = 1; i <= alphaListSize; i++) {
-							alphaList.add(Double.valueOf(args[pos + i]));
-						}
-
-						pos += (alphaListSize + 1);
-					}
-					break;
-				case 'h':
-				case 'H':
-					params.setAlphaHigh(parse(DefaultConstants.ALPHAHIGH,
-							args[pos + 1], "Parameter alpha_high"));
+				case 'c':
+				case 'C':
+					params.setAlphaHigh(parse(DefaultConstants.COVERAGE,
+							args[pos + 1], "Parameter coverage"));
 					pos += 2;
 					break;
 				case 'i':
@@ -208,15 +191,19 @@ public class DirichletClusterEvol {
 		System.out.println("\tjava -jar " + DefaultConstants.PACKAGENAME
 				+ " [OPTION] abundance_species_equal.txt\n");
 		System.out.println("Options:");
+		// System.out
+		// .println("\t-a:\tThe value followed will be the alpha parameter");
+		// System.out.println("\t   \tDefault value " + DefaultConstants.ALPHA);
+		// System.out.println("\t\tExample 1: -a3 0.0000001 0.00001 0.001");
+		// System.out.println("\t\tExample 2: -a 0.0000001");
+		// System.out
+		// .println("\t-h:\tThe value followed will be the alpha_high parameter");
+		// System.out
+		// .println("\t   \tDefault value " + DefaultConstants.ALPHAHIGH);
+
 		System.out
-				.println("\t-a:\tThe value followed will be the alpha parameter");
-		System.out.println("\t   \tDefault value " + DefaultConstants.ALPHA);
-		System.out.println("\t\tExample 1: -a3 0.0000001 0.00001 0.001");
-		System.out.println("\t\tExample 2: -a 0.0000001");
-		System.out
-				.println("\t-h:\tThe value followed will be the alpha_high parameter");
-		System.out
-				.println("\t   \tDefault value " + DefaultConstants.ALPHAHIGH);
+				.println("\t-h:\tThe value followed will be the coverage parameter");
+		System.out.println("\t   \tDefault value " + DefaultConstants.COVERAGE);
 		System.out
 				.println("\t-l:\tThe value followed will be the alpha_low parameter");
 		System.out.println("\t   \tDefault value " + DefaultConstants.ALPHALOW);
@@ -466,52 +453,55 @@ public class DirichletClusterEvol {
 		System.out.println(String.valueOf((1.0 - (rmList.size() + 0.0)
 				/ overlapInTotal) > DefaultConstants.COVERAGE));
 		System.out.println("Overlap");
-		for (Integer key:overlapResult.keySet()) {
+		for (Integer key : overlapResult.keySet()) {
 			System.out.print(String.valueOf(key) + ":");
 			Map<Integer, Integer> tempMap = new HashMap<Integer, Integer>();
 			for (Integer temp : overlapResult.get(key)) {
-				int i = doubleReadList.get(temp).getId() / DefaultConstants.TESTNUM + 1;
+				int i = doubleReadList.get(temp).getId()
+						/ DefaultConstants.TESTNUM + 1;
 				if (tempMap.containsKey(i)) {
 					tempMap.put(i, tempMap.get(i) + 1);
 				} else {
 					tempMap.put(i, 1);
 				}
 			}
-			for (Integer tempKey:tempMap.keySet()) {
+			for (Integer tempKey : tempMap.keySet()) {
 				System.out.print("\t");
 				System.out.print(tempKey);
 				System.out.print("\t");
 				System.out.print(tempMap.get(tempKey));
 				System.out.print("\t");
-				System.out.print(tempMap.get(tempKey) / (overlapResult.get(key).size() + 0.0));
+				System.out.print(tempMap.get(tempKey)
+						/ (overlapResult.get(key).size() + 0.0));
 			}
 			System.out.println();
 		}
 		System.out.println("Overall");
-		for (Integer key:overallResult.keySet()) {
+		for (Integer key : overallResult.keySet()) {
 			System.out.print(String.valueOf(key) + ":");
 			Map<Integer, Integer> tempMap = new HashMap<Integer, Integer>();
 			for (Integer temp : overallResult.get(key)) {
-				int i = doubleReadList.get(temp).getId() / DefaultConstants.TESTNUM + 1;
+				int i = doubleReadList.get(temp).getId()
+						/ DefaultConstants.TESTNUM + 1;
 				if (tempMap.containsKey(i)) {
 					tempMap.put(i, tempMap.get(i) + 1);
 				} else {
 					tempMap.put(i, 1);
 				}
 			}
-			for (Integer tempKey:tempMap.keySet()) {
+			for (Integer tempKey : tempMap.keySet()) {
 				System.out.print("\t");
 				System.out.print(tempKey);
 				System.out.print("\t");
 				System.out.print(tempMap.get(tempKey));
 				System.out.print("\t");
-				System.out.print(tempMap.get(tempKey) / (overallResult.get(key).size() + 0.0));
+				System.out.print(tempMap.get(tempKey)
+						/ (overallResult.get(key).size() + 0.0));
 			}
 			System.out.println();
 			System.out.println();
 		}
-		if ((1.0 - (rmList.size() + 0.0)
-				/ overlapInTotal) > DefaultConstants.COVERAGE) {
+		if ((1.0 - (rmList.size() + 0.0) / overlapInTotal) > DefaultConstants.COVERAGE) {
 			return result;
 		} else {
 			return null;
@@ -555,26 +545,24 @@ public class DirichletClusterEvol {
 
 			System.out.println((new Date()).toString()
 					+ "\tDirichlet single round begin");
-			
+
 			int[] subResult = new int[subDoubleReadList.size()];
 			for (int i = 0; i < subResult.length; i++) {
 				subResult[i] = tempZModeLower + 1;
 			}
-			
+
 			boolean flag = false;
-			
-			for (double alphaHigh:alphaHighArr) {
+
+			for (double alphaHigh : alphaHighArr) {
 				tempParams.setAlphaHigh(alphaHigh);
-				int[] tempSubResult = dirichletClusterSingle(
-						subDoubleReadList, subOverlapList, tempParams,
-						tempZModeLower);
+				int[] tempSubResult = dirichletClusterSingle(subDoubleReadList,
+						subOverlapList, tempParams, tempZModeLower);
 				if (!flag && (null != tempSubResult)) {
 					subResult = tempSubResult;
 					flag = true;
+					break;
 				}
 			}
-
-
 
 			// System.out.print("subResult");
 			for (int i = 0; i < subResult.length; i++) {
@@ -644,27 +632,44 @@ public class DirichletClusterEvol {
 		}
 		int oldZModeMax = 1;
 
-		if (alphaList.size() > 0) {
+		// if (alphaList.size() > 0) {
+		//
+		// for (int i = 0; i < alphaList.size(); i++) {
+		// params.setAlpha(alphaList.get(i));
+		// // System.out.println(alphaList.get(i));
+		// zMode = dirichletCluster(doubleReadList, overlapList, zMode,
+		// params);
+		// int zModeMax = oldZModeMax;
+		// for (int j = 0; j < zMode.length; j++) {
+		// if (zModeMax < zMode[j]) {
+		// zModeMax = zMode[j];
+		// }
+		// }
+		//
+		// // if (oldZModeMax == zModeMax) {
+		// // break;
+		// // }
+		// oldZModeMax = zModeMax;
+		// }
+		// } else {
+		// zMode = dirichletCluster(doubleReadList, overlapList, zMode, params);
+		// }
 
-			for (int i = 0; i < alphaList.size(); i++) {
-				params.setAlpha(alphaList.get(i));
-				// System.out.println(alphaList.get(i));
-				zMode = dirichletCluster(doubleReadList, overlapList, zMode,
-						params);
-				int zModeMax = oldZModeMax;
-				for (int j = 0; j < zMode.length; j++) {
-					if (zModeMax < zMode[j]) {
-						zModeMax = zMode[j];
-					}
-				}
-
-				// if (oldZModeMax == zModeMax) {
-				// break;
-				// }
-				oldZModeMax = zModeMax;
-			}
-		} else {
+		// TEST
+		params.setAlpha(DefaultConstants.ALPHALOW);
+		while (true) {
 			zMode = dirichletCluster(doubleReadList, overlapList, zMode, params);
+			int zModeMax = oldZModeMax;
+			for (int j = 0; j < zMode.length; j++) {
+				if (zModeMax < zMode[j]) {
+					zModeMax = zMode[j];
+				}
+			}
+
+			if (oldZModeMax == zModeMax) {
+				break;
+			}
+			oldZModeMax = zModeMax;
 		}
 
 		System.out.println((new Date()).toString()

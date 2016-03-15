@@ -825,7 +825,7 @@ public class DirichletClusterSingle {
 			System.out.println((new Date()).toString() + "\tOverlap Group: "
 					+ i);
 			System.out.println(overlapList.get(i).toString());
-			if (overlapList.get(i).size() > 1) {
+			if (overlapList.get(i).size() > 0) {
 //				System.out.println(Arrays.toString(transPCounts(tempAccumCountList.get(0).get(1))));
 				if (tempAccumCountList.get(0).size() > 1) {
 				System.out.println(Arrays.toString(startPCounts(tempAccumCountList.get(0).get(2))));
