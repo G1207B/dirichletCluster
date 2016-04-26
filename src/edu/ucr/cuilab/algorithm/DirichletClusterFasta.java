@@ -6,7 +6,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -17,9 +16,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-public class DirichletClusterEvol {
+public class DirichletClusterFasta {
 
-	// Get all possible pair
 	private static List<String> getPermutations(char[] charList, int depth) {
 		List<String> stringList = new ArrayList<String>();
 		if (1 == depth) {
@@ -86,12 +84,15 @@ public class DirichletClusterEvol {
 		int clusterNumForTest = DefaultConstants.TESTNUM;
 		double coverage = DefaultConstants.COVERAGE;
 		int neighborX = 1;
-//		 String input = "/home/xinping/Desktop/6008/5_test.txt";
-//		String input = "/home/xinping/Desktop/6008/5_2345Borr.txt";
-//		String input = "/home/xinping/Desktop/6008/Data/5_3910AcaryEhrl.txt";
-		String input = "/home/xinping/Desktop/6008/Data/AcaryEhrlNew.txt";
-//		String input = "/home/xinping/Desktop/6008/Data/AcaryEhrlNew_5W.txt";
-//		String input = "/home/xinping/Desktop/6008/Data/Acary_Ehrl_9104_pair_5W.txt";
+		// String input = "/home/xinping/Desktop/6008/5_test.txt";
+		// String input = "/home/xinping/Desktop/6008/5_2345Borr.txt";
+		// String input = "/home/xinping/Desktop/6008/Data/5_3910AcaryEhrl.txt";
+//		String input = "/home/xinping/Desktop/6008/Data/AcaryEhrlNew.txt";
+		// String input = "/home/xinping/Desktop/6008/Data/AcaryEhrlNew_5W.txt";
+		// String input =
+		// "/home/xinping/Desktop/6008/Data/Acary_Ehrl_9104_pair_5W.txt";
+//		String input = "/home/xinping/Desktop/6008/Data/678910_1W.fna";
+		String input = "/home/xinping/options/5.fna";
 		String output = null;
 
 		Date date = new Date();
@@ -102,6 +103,8 @@ public class DirichletClusterEvol {
 
 		if (0 == args.length) {
 			printHelp();
+//			params.setAlpha(0.0000000001528);
+//			params.setAlphaLow(0.0000000001528);
 			return;
 		}
 
@@ -169,19 +172,14 @@ public class DirichletClusterEvol {
 					break;
 				case 'x':
 				case 'X':
-					params.setNeighborX(parse(DefaultConstants.NEIGHBORX, args[pos + 1],
-							"Parameter neighborX"));
+					params.setNeighborX(parse(DefaultConstants.NEIGHBORX,
+							args[pos + 1], "Parameter neighborX"));
 					pos += 2;
 					break;
 				case 'z':
 				case 'Z':
 					params.setZero(parse(DefaultConstants.ZERO, args[pos + 1],
 							"Parameter zero"));
-					pos += 2;
-					break;
-				case '5':
-					params.setForTest(parse(DefaultConstants.TESTNUM,
-							args[pos + 1], "Parameter forTest"));
 					pos += 2;
 					break;
 				default:
@@ -197,17 +195,35 @@ public class DirichletClusterEvol {
 			output = input + "." + date.toString() + ".output";
 		}
 
-		mainJob(input, output, params);
+		mainJobFasta(input, output, params);
+	}
+
+	private static List<String[]> readFasta(String inputFile) throws Exception {
+		BufferedReader br = new BufferedReader(new FileReader(new File(
+				inputFile)));
+		List<String[]> readList = new ArrayList<String[]>();
+		String line = null;
+		int counter = -1;
+		while (null != (line = br.readLine())) {
+			if (line.startsWith(">")) {
+				readList.add(new String[] { line, "" });
+				counter++;
+			} else {
+				readList.get(counter)[1] += line;
+			}
+		}
+		br.close();
+		return readList;
 	}
 
 	public static void printHelp() {
 		System.out.println("Usage: ");
 		System.out.println("\tjava -jar " + DefaultConstants.PACKAGENAME
-				+ " -i abundance_species_equal.txt");
-		System.out.println("The file contains pair-end sequence\n");
+				+ " -i abundance_species_equal.fna");
+		System.out.println("The FASTA file contains pair-end sequence\n");
 		System.out.println("More Usage: ");
 		System.out.println("\tjava -jar " + DefaultConstants.PACKAGENAME
-				+ " [OPTION] abundance_species_equal.txt\n");
+				+ " [OPTION] abundance_species_equal.fna\n");
 		System.out.println("Options:");
 		System.out
 				.println("\t-a:\tThe value followed will be the alpha parameter");
@@ -240,22 +256,12 @@ public class DirichletClusterEvol {
 				.println("\t-u:\tThe string followed will be the output file");
 		System.out
 				.println("\t   \tDefault value is the input file name with additional time");
-		System.out.println("\t-x:\tThe value followed will be neighborX parameter");
-		System.out.println("\t   \tDefault value " + DefaultConstants.NEIGHBORX);
+		System.out
+				.println("\t-x:\tThe value followed will be neighborX parameter");
+		System.out
+				.println("\t   \tDefault value " + DefaultConstants.NEIGHBORX);
 		System.out.println("\t-z:\tThe value followed will be zero parameter");
 		System.out.println("\t   \tDefault value " + DefaultConstants.ZERO);
-	}
-
-	private static List<String> readFile(String inputFile) throws Exception {
-		BufferedReader br = new BufferedReader(new FileReader(new File(
-				inputFile)));
-		List<String> readList = new ArrayList<String>();
-		String line = null;
-		while (null != (line = br.readLine())) {
-			readList.add(line);
-		}
-		br.close();
-		return readList;
 	}
 
 	private static List<Set<Integer>> updateOverlap(
@@ -291,7 +297,7 @@ public class DirichletClusterEvol {
 		}
 		return result;
 	}
-	
+
 	public static int[] dirichletClusterSingle(List<DoubleRead> doubleReadList,
 			List<Set<Integer>> overlapList, Params params, int zModeLower) {
 
@@ -330,8 +336,10 @@ public class DirichletClusterEvol {
 				doubleReadList, z, overlapList.get(0), tempAccumCountList);
 		mapCountList = DirichletClusterSingle.updateGroupMapList(mapCountList,
 				z, overlapList.get(0));
-//		DirichletClusterSingle.newGroup(doubleReadList, params.getNeighbor());
-		DirichletClusterSingle.newGroup(doubleReadList, params.getSeqs() / (max(z) + 1) / params.getNeighborX());
+		// DirichletClusterSingle.newGroup(doubleReadList,
+		// params.getNeighbor());
+		DirichletClusterSingle.newGroup(doubleReadList, params.getSeqs()
+				/ (max(z) + 1) / params.getNeighborX());
 
 		List<Set<Integer>> rmList = new ArrayList<Set<Integer>>();
 		int accumSeqCount = overlapList.get(0).size();
@@ -391,7 +399,10 @@ public class DirichletClusterEvol {
 
 					}
 					if (max(z) > group) {
-						DirichletClusterSingle.newGroup(doubleReadList, params.getSeqs() / (max(z) + 1) / params.getNeighborX());
+						DirichletClusterSingle.newGroup(
+								doubleReadList,
+								params.getSeqs() / (max(z) + 1)
+										/ params.getNeighborX());
 					}
 					group = max(z);
 
@@ -434,7 +445,10 @@ public class DirichletClusterEvol {
 							mapCountList, z, overlapList.get(i));
 				}
 				if (max(z) > group) {
-					DirichletClusterSingle.newGroup(doubleReadList, params.getSeqs() / (max(z) + 1) / params.getNeighborX());
+					DirichletClusterSingle.newGroup(
+							doubleReadList,
+							params.getSeqs() / (max(z) + 1)
+									/ params.getNeighborX());
 				}
 				group = max(z);
 				accumSeqCount += overlapList.get(i).size();
@@ -463,7 +477,9 @@ public class DirichletClusterEvol {
 			mapCountList = DirichletClusterSingle.updateGroupMapList(
 					mapCountList, z, seqList);
 			if (max(z) > group) {
-				DirichletClusterSingle.newGroup(doubleReadList, params.getSeqs() / (max(z) + 1) / params.getNeighborX());
+				DirichletClusterSingle
+						.newGroup(doubleReadList, params.getSeqs()
+								/ (max(z) + 1) / params.getNeighborX());
 			}
 			group = max(z);
 		}
@@ -499,17 +515,17 @@ public class DirichletClusterEvol {
 		System.out.println("Overlap");
 		for (Integer key : overlapResult.keySet()) {
 			System.out.print(String.valueOf(key) + ":");
-			Map<Integer, Integer> tempMap = new HashMap<Integer, Integer>();
+			Map<String, Integer> tempMap = new HashMap<String, Integer>();
 			for (Integer temp : overlapResult.get(key)) {
-				int i = doubleReadList.get(temp).getId() / params.getForTest()
-						+ 1;
-				if (tempMap.containsKey(i)) {
-					tempMap.put(i, tempMap.get(i) + 1);
+				
+				String strKey = doubleReadList.get(temp).getGI();
+				if (tempMap.containsKey(strKey)) {
+					tempMap.put(strKey, tempMap.get(strKey) + 1);
 				} else {
-					tempMap.put(i, 1);
+					tempMap.put(strKey, 1);
 				}
 			}
-			for (Integer tempKey : tempMap.keySet()) {
+			for (String tempKey : tempMap.keySet()) {
 				System.out.print("\t");
 				System.out.print(tempKey);
 				System.out.print("\t");
@@ -523,17 +539,17 @@ public class DirichletClusterEvol {
 		System.out.println("Overall");
 		for (Integer key : overallResult.keySet()) {
 			System.out.print(String.valueOf(key) + ":");
-			Map<Integer, Integer> tempMap = new HashMap<Integer, Integer>();
+			Map<String, Integer> tempMap = new HashMap<String, Integer>();
 			for (Integer temp : overallResult.get(key)) {
-				int i = doubleReadList.get(temp).getId()
-						/ params.getForTest() + 1;
-				if (tempMap.containsKey(i)) {
-					tempMap.put(i, tempMap.get(i) + 1);
+
+				String strKey = doubleReadList.get(temp).getGI();
+				if (tempMap.containsKey(strKey)) {
+					tempMap.put(strKey, tempMap.get(strKey) + 1);
 				} else {
-					tempMap.put(i, 1);
+					tempMap.put(strKey, 1);
 				}
 			}
-			for (Integer tempKey : tempMap.keySet()) {
+			for (String tempKey : tempMap.keySet()) {
 				System.out.print("\t");
 				System.out.print(tempKey);
 				System.out.print("\t");
@@ -545,21 +561,14 @@ public class DirichletClusterEvol {
 			System.out.println();
 			System.out.println();
 		}
-		if ((1.0 - (rmList.size() + 0.0) / overlapInTotal) > params.getCoverage()) {
+		if ((1.0 - (rmList.size() + 0.0) / overlapInTotal) > params
+				.getCoverage()) {
 			return result;
 		} else {
 			return null;
 		}
 	}
 
-	private static int decideNeighbor(int nseq) {
-		int result = 200;
-		if (nseq > 200) {
-			result = (int)Math.sqrt(200 * nseq);
-		}
-		return result;
-	}
-	
 	private static int[] dirichletCluster(List<DoubleRead> doubleReadList,
 			List<Set<Integer>> overlapList, int[] zMode, Params params)
 			throws CloneNotSupportedException {
@@ -575,7 +584,7 @@ public class DirichletClusterEvol {
 				.println((new Date()).toString()
 						+ "\tDirichlet Cluster start with alpha = "
 						+ params.getAlpha());
-		
+
 		int groupNum = zModeSet.size();
 		int oldGroupNum = zModeSet.size();
 
@@ -597,10 +606,11 @@ public class DirichletClusterEvol {
 					subDoubleReadList, overlapList);
 			Params tempParams = (Params) params.clone();
 			tempParams.setSeqs(subDoubleReadList.size());
-//			tempParams.setNeighbor(subDoubleReadList.size()/10);
-//			tempParams.setNeighbor(decideNeighbor(subDoubleReadList.size()));
+			// tempParams.setNeighbor(subDoubleReadList.size()/10);
+			// tempParams.setNeighbor(decideNeighbor(subDoubleReadList.size()));
 			if (1 < groupNum) {
-				tempParams.setNeighbor(subDoubleReadList.size() / (groupNum * params.getNeighborX()));
+				tempParams.setNeighbor(subDoubleReadList.size()
+						/ (groupNum * params.getNeighborX()));
 			}
 			System.out.println((new Date()).toString()
 					+ "\tDirichlet single round begin");
@@ -627,12 +637,12 @@ public class DirichletClusterEvol {
 				if (subResult[i] > tempZModeLower) {
 					tempZModeLower = subResult[i];
 				}
-				
+
 			}
-			
+
 			oldGroupNum--;
 			groupNum = oldGroupNum + tempZModeLower;
-			
+
 			System.out.println((new Date()).toString()
 					+ "\tDirichlet single round complete");
 
@@ -644,19 +654,30 @@ public class DirichletClusterEvol {
 		return updateZMode;
 	}
 
-	public static void mainJob(String inputFile, String outputFile,
+	private static String getGI(String description) {
+		int start = description.indexOf("GI=") + 3;
+		int end = description.indexOf(',');
+		return description.substring(start, end);
+	}
+
+	public static void mainJobFasta(String inputFile, String outputFile,
 			Params params) throws Exception {
 
 		System.out.println((new Date()).toString()
 				+ "\tProgram start... \nReading dataset...");
 
-		List<String> readList = readFile(inputFile);
-		params.setSeqs(readList.size() / 2);
-		params.setForTest(params.getSeqs() / params.getForTest());
+		List<String[]> readFastaList = readFasta(inputFile);
+		List<String> readList = new ArrayList<String>(readFastaList.size());
+		List<String> descList = new ArrayList<String>(readFastaList.size());
+		params.setSeqs(readFastaList.size() / 2);
+
+		for (int i = 0; i < readFastaList.size(); i++) {
+			descList.add(readFastaList.get(i)[0]);
+			readList.add(readFastaList.get(i)[1]);
+		}
 
 		char[] charList = { 'A', 'C', 'G', 'T' };
-		List<String> permutationList = getPermutations(charList,
-				params.getTransOrder() + 1);
+		List<String> permutationList = getPermutations(charList, 2);
 
 		System.out.println((new Date()).toString()
 				+ "\tBegin to calculate overlapping infos");
@@ -668,35 +689,20 @@ public class DirichletClusterEvol {
 
 		List<DoubleRead> doubleReadList = new ArrayList<DoubleRead>();
 		for (int i = 0; i < params.getSeqs(); i++) {
-			DoubleRead dr = new DoubleRead(i, readList.get(i * 2),
-					readList.get(i * 2 + 1), params.getTransOrder() + 1,
-					permutationList);
+			DoubleRead dr = new DoubleRead(i, descList.get(i * 2 + 0),
+					descList.get(i * 2 + 1), readList.get(i * 2 + 0),
+					readList.get(i * 2 + 1), 2, permutationList);
+			dr.setGI(getGI(descList.get(i * 2 + 0)));
 			doubleReadList.add(dr);
 		}
-
+		
 		System.out
-				.println((new Date()).toString() + "\tMain processor started");
-
+		.println((new Date()).toString() + "\tMain processor started");
+		
 		int[] zMode = new int[params.getSeqs()];
 		for (int i = 0; i < params.getSeqs(); i++) {
 			zMode[i] = 1;
 		}
-		int oldZModeMax = 1;
-
-//		while (true) {
-//			zMode = dirichletCluster(doubleReadList, overlapList, zMode, params);
-//			int zModeMax = oldZModeMax;
-//			for (int j = 0; j < zMode.length; j++) {
-//				if (zModeMax < zMode[j]) {
-//					zModeMax = zMode[j];
-//				}
-//			}
-//
-//			if (oldZModeMax == zModeMax) {
-//				break;
-//			}
-//			oldZModeMax = zModeMax;
-//		}
 		zMode = dirichletCluster(doubleReadList, overlapList, zMode, params);
 
 		System.out.println((new Date()).toString()
@@ -707,11 +713,9 @@ public class DirichletClusterEvol {
 			pw.println(zMode[i]);
 		}
 		pw.close();
-
 	}
 
 	public static void main(String[] args) throws Exception {
 		frontEnd(args);
 	}
-
 }

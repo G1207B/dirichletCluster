@@ -14,6 +14,7 @@ public class Params implements Cloneable {
 	private double zero;
 	private int forTest;
 	private double coverage;
+	private int neighborX;
 	public Params() {
 		super();
 	}
@@ -32,11 +33,12 @@ public class Params implements Cloneable {
 		this.zero = param.getZero();
 		this.forTest = param.getForTest();
 		this.coverage = param.getCoverage();
+		this.neighborX = param.getNeighborX();
 	}
 
 	public Params(int particles, int neighbor, int seqs, int transOrder,
 			double majority, double threshold, double alpha, double alphaLow,
-			double alphaHigh, double zero, int forTest, double coverage) {
+			double alphaHigh, double zero, int forTest, double coverage, int neighborX) {
 		super();
 		this.particles = particles;
 		this.neighbor = neighbor;
@@ -50,6 +52,15 @@ public class Params implements Cloneable {
 		this.zero = zero;
 		this.forTest = forTest;
 		this.coverage = coverage;
+		this.neighborX = neighborX;
+	}
+
+	public int getNeighborX() {
+		return neighborX;
+	}
+
+	public void setNeighborX(int neighborX) {
+		this.neighborX = neighborX;
 	}
 
 	public double getCoverage() {

@@ -49,6 +49,120 @@ public class EncodeBinTask {
 				.toString();
 	}
 
+	public static Set<Long> stringEncodeSimple(String seq, int wLen) {
+		Set<Long> encodeSet = new HashSet<Long>();
+		long encode0 = 0l;
+		long encode1 = 0l;
+		long encode2 = 0l;
+		long encode3 = 0l;
+		String tr = getTransReverse(seq);
+		char[] seqCharArray = seq.toCharArray();
+		char[] trCharArray = tr.toCharArray();
+		int length = seq.length();
+
+		for (int i = 0; i < wLen; i++) {
+			encode0 <<= 2;
+			encode1 <<= 2;
+			encode2 <<= 2;
+			encode3 <<= 2;
+			switch (seqCharArray[i]) {
+			case 'C':
+				encode0 += 1;
+				break;
+			case 'G':
+				encode0 += 2;
+				break;
+			case 'T':
+				encode0 += 3;
+			default:
+			}
+
+			switch (trCharArray[i]) {
+			case 'C':
+				encode1 += 1;
+				break;
+			case 'G':
+				encode1 += 2;
+				break;
+			case 'T':
+				encode1 += 3;
+			default:
+			}
+			
+			switch (seqCharArray[length - wLen + i]) {
+			case 'C':
+				encode2 += 1;
+				break;
+			case 'G':
+				encode2 += 2;
+				break;
+			case 'T':
+				encode2 += 3;
+			default:
+			}
+
+			switch (trCharArray[length - wLen + i]) {
+			case 'C':
+				encode3 += 1;
+				break;
+			case 'G':
+				encode3 += 2;
+				break;
+			case 'T':
+				encode3 += 3;
+			default:
+			}
+		}
+
+		encodeSet.add(encode0);
+		encodeSet.add(encode1);
+		encodeSet.add(encode2);
+		encodeSet.add(encode3);
+		
+		return encodeSet;
+	}
+
+	public static Set<Long> stringEncodeSingle(String seq, int wLen) {
+		Set<Long> encodeSet = new HashSet<Long>();
+		long encode0 = 0l;
+		char[] seqCharArray = seq.toCharArray();
+		int length = seq.length();
+
+		for (int i = 0; i < wLen; i++) {
+			encode0 <<= 2;
+			switch (seqCharArray[i]) {
+			case 'C':
+				encode0 += 1;
+				break;
+			case 'G':
+				encode0 += 2;
+				break;
+			case 'T':
+				encode0 += 3;
+			default:
+			}
+		}
+
+		encodeSet.add(encode0);
+
+		for (int i = wLen; i < length; i++) {
+			encode0 <<= 2;
+			switch (seqCharArray[i]) {
+			case 'C':
+				encode0 += 1;
+				break;
+			case 'G':
+				encode0 += 2;
+				break;
+			case 'T':
+				encode0 += 3;
+			default:
+			}
+			encodeSet.add(encode0);
+		}
+		return encodeSet;
+	}
+	
 	public static Set<Long> stringEncode(String seq, int wLen) {
 		Set<Long> encodeSet = new HashSet<Long>();
 		long encode0 = 0l;
@@ -126,7 +240,8 @@ public class EncodeBinTask {
 		PrintWriter pw = new PrintWriter(new FileWriter(new File(OUTPUT)));
 
 		for (int i = 0; i < strList.size(); i++) {
-			Set<Long> encodeSet = stringEncode(strList.get(i), wLen);
+//			Set<Long> encodeSet = stringEncode(strList.get(i), wLen);
+			Set<Long> encodeSet = stringEncodeSimple(strList.get(i), wLen);
 			for (Long l : encodeSet) {
 				pw.print("\t");
 				pw.print(l);
@@ -135,16 +250,15 @@ public class EncodeBinTask {
 		}
 		pw.close();
 	}
-	
-	
 
 	public static void mainJob(List<String> strList, int wLen,
 			List<Set<Integer>> idSetList, List<Set<Long>> encodeSetList) {
 
 		for (int i = 0; i < strList.size() / 2; i++) {
-			Set<Long> encodeSet = stringEncode(strList.get(i * 2), wLen);
-			encodeSet.addAll(stringEncode(strList.get(i * 2 + 1), wLen));
-
+//			Set<Long> encodeSet = stringEncode(strList.get(i * 2), wLen);
+//			encodeSet.addAll(stringEncode(strList.get(i * 2 + 1), wLen));
+			Set<Long> encodeSet = stringEncodeSimple(strList.get(i * 2), wLen);
+			encodeSet.addAll(stringEncodeSimple(strList.get(i * 2 + 1), wLen));
 			boolean flag = false;
 
 			for (int j = 0; j < encodeSetList.size(); j++) {
@@ -177,19 +291,20 @@ public class EncodeBinTask {
 		});
 	}
 
-	public static List<Set<Integer>> encodeMainJob(List<String> strList, int wLen)
-			throws IOException {
+	public static List<Set<Integer>> encodeMainJob(List<String> strList,
+			int wLen) throws IOException {
 		List<Set<Integer>> idSetList = new ArrayList<Set<Integer>>();
 		List<Set<Long>> encodeSetList = new ArrayList<Set<Long>>();
 
 		for (int i = 0; i < strList.size() / 2; i++) {
-			Set<Long> encodeSet = stringEncode(strList.get(i * 2), wLen);
-			encodeSet.addAll(stringEncode(strList.get(i * 2 + 1), wLen));
-
+			Set<Long> strSet = stringEncodeSingle(strList.get(i * 2), wLen);
+			strSet.addAll(stringEncodeSingle(strList.get(i * 2 + 1), wLen));
+			Set<Long> encodeSet = stringEncodeSimple(strList.get(i * 2), wLen);
+			encodeSet.addAll(stringEncodeSimple(strList.get(i * 2 + 1), wLen));
 			boolean flag = false;
 
 			for (int j = 0; j < encodeSetList.size(); j++) {
-				for (Long l : encodeSet) {
+				for (Long l : strSet) {
 					if (encodeSetList.get(j).contains(l)) {
 						encodeSetList.get(j).addAll(encodeSet);
 						idSetList.get(j).add(i);
@@ -219,16 +334,17 @@ public class EncodeBinTask {
 
 		return idSetList;
 	}
-	
+
 	public static void mainJob(List<String> strList, int wLen, PrintWriter pw)
 			throws IOException {
 		List<Set<Integer>> idSetList = new ArrayList<Set<Integer>>();
 		List<Set<Long>> encodeSetList = new ArrayList<Set<Long>>();
 
 		for (int i = 0; i < strList.size() / 2; i++) {
-			Set<Long> encodeSet = stringEncode(strList.get(i * 2), wLen);
-			encodeSet.addAll(stringEncode(strList.get(i * 2 + 1), wLen));
-
+//			Set<Long> encodeSet = stringEncode(strList.get(i * 2), wLen);
+//			encodeSet.addAll(stringEncode(strList.get(i * 2 + 1), wLen));
+			Set<Long> encodeSet = stringEncodeSimple(strList.get(i * 2), wLen);
+			encodeSet.addAll(stringEncodeSimple(strList.get(i * 2 + 1), wLen));
 			boolean flag = false;
 
 			for (int j = 0; j < encodeSetList.size(); j++) {
@@ -268,16 +384,17 @@ public class EncodeBinTask {
 			pw.println();
 		}
 	}
-	
+
 	public static void mainJob(List<String> strList, int wLen)
 			throws IOException {
 		List<Set<Integer>> idSetList = new ArrayList<Set<Integer>>();
 		List<Set<Long>> encodeSetList = new ArrayList<Set<Long>>();
 
 		for (int i = 0; i < strList.size() / 2; i++) {
-			Set<Long> encodeSet = stringEncode(strList.get(i * 2), wLen);
-			encodeSet.addAll(stringEncode(strList.get(i * 2 + 1), wLen));
-
+//			Set<Long> encodeSet = stringEncode(strList.get(i * 2), wLen);
+//			encodeSet.addAll(stringEncode(strList.get(i * 2 + 1), wLen));
+			Set<Long> encodeSet = stringEncodeSimple(strList.get(i * 2), wLen);
+			encodeSet.addAll(stringEncodeSimple(strList.get(i * 2 + 1), wLen));
 			boolean flag = false;
 
 			for (int j = 0; j < encodeSetList.size(); j++) {

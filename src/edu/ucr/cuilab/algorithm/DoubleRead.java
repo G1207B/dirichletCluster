@@ -9,6 +9,9 @@ import java.util.TreeMap;
 public class DoubleRead {
 
 	private int id;
+	private String GI;
+	private String descriptionA;
+	private String descriptionB;
 	private String readA;
 	private String readB;
 	private int transOrder;
@@ -19,6 +22,8 @@ public class DoubleRead {
 	private double[] newGroupStartp;
 	private double[] newGroupTransp;
 
+	private double identification;
+
 	public DoubleRead(String readA, String readB, int transOrder,
 			List<String> permutationList) {
 		this.readA = readA;
@@ -26,8 +31,9 @@ public class DoubleRead {
 		this.transOrder = transOrder;
 		fillCountList(permutationList);
 		calculateGC();
-//		calculateGCTest();
+		// calculateGCTest();
 		calculateStartWhere();
+		this.identification = -1.0;
 	}
 
 	public DoubleRead(int id, String readA, String readB, int transOrder,
@@ -38,8 +44,24 @@ public class DoubleRead {
 		this.transOrder = transOrder;
 		fillCountList(permutationList);
 		calculateGC();
-//		calculateGCTest();
+		// calculateGCTest();
 		calculateStartWhere();
+		this.identification = -1.0;
+	}
+	
+	public DoubleRead(int id, String descriptionA, String descriptionB, String readA, String readB, int transOrder,
+			List<String> permutationList) {
+		this.id = id;
+		this.readA = readA;
+		this.readB = readB;
+		this.transOrder = transOrder;
+		this.descriptionA = descriptionA;
+		this.descriptionB = descriptionB;
+		fillCountList(permutationList);
+		calculateGC();
+		// calculateGCTest();
+		calculateStartWhere();
+		this.identification = -1.0;
 	}
 
 	public void printStartWhere() {
@@ -221,7 +243,9 @@ public class DoubleRead {
 			List<String> permutationList) {
 		for (int i = 0; i < data.length() - transOrder + 1; i++) {
 			String key = data.substring(i, i + transOrder);
-			countMap.put(key, countMap.get(key) + 1);
+			if (countMap.containsKey(key)) {
+				countMap.put(key, countMap.get(key) + 1);
+			}
 		}
 	}
 
@@ -247,6 +271,67 @@ public class DoubleRead {
 				getTransReverse(readB) };
 		countList = countMerForList(dataList, permutationList);
 	}
+	
+	public double calcIdentification() {
+		double result = 1.0;
+		for (int i = 0; i < 4; i++) {
+			result *= this.getNewGroupStartp()[this.getStartWhere()[i]];
+		}
+		double tempSum = 0.0;
+		for (int i = 0; i < this.getCountList().size(); i++) {
+			if (this.getNewGroupTransp()[i] < Double.MIN_NORMAL) {
+				tempSum += countList.get(i) * DefaultConstants.ZERO;
+			} else {
+				tempSum += countList.get(i)
+						* Math.log(this.getNewGroupTransp()[i]);
+			}
+		}
+		result *= Math.exp(tempSum);
+		this.identification = result;
+		return result;
+	}
+
+	public double getLogIdentification() {
+		double result = 0.0;
+		for (int i = 0; i < 4; i++) {
+			result += Math.log10(this.getNewGroupStartp()[this.getStartWhere()[i]]);
+		}
+		double tempSum = 0.0;
+		for (int i = 0; i < this.getCountList().size(); i++) {
+			if (this.getNewGroupTransp()[i] < DefaultConstants.ZERO) {
+				tempSum += countList.get(i) * Math.log10(DefaultConstants.ZERO);
+			} else {
+				tempSum += countList.get(i)
+						* Math.log10(this.getNewGroupTransp()[i]);
+			}
+		}
+		return result + tempSum;
+	}
+	
+	public double getIdentification() {
+		if (this.identification < 0) {
+			double result = 1.0;
+			for (int i = 0; i < 4; i++) {
+				result *= this.getNewGroupStartp()[this.getStartWhere()[i]];
+			}
+			double tempSum = 0.0;
+			for (int i = 0; i < this.getCountList().size(); i++) {
+				if (this.getNewGroupTransp()[i] < DefaultConstants.ZERO) {
+					tempSum += countList.get(i) * Math.log(DefaultConstants.ZERO);
+				} else {
+					tempSum += countList.get(i)
+							* Math.log(this.getNewGroupTransp()[i]);
+				}
+			}
+			result *= Math.exp(tempSum);
+			this.identification = result;
+		}
+		return this.identification;
+	}
+
+	public void setIdentification(double identification) {
+		this.identification = identification;
+	}
 
 	public int getId() {
 		return id;
@@ -256,6 +341,30 @@ public class DoubleRead {
 		this.id = id;
 	}
 
+	public String getGI() {
+		return GI;
+	}
+
+	public void setGI(String gI) {
+		GI = gI;
+	}
+
+	public String getDescriptionA() {
+		return descriptionA;
+	}
+
+	public void setDescriptionA(String descriptionA) {
+		this.descriptionA = descriptionA;
+	}
+
+	public String getDescriptionB() {
+		return descriptionB;
+	}
+
+	public void setDescriptionB(String descriptionB) {
+		this.descriptionB = descriptionB;
+	}
+	
 	public String getReadA() {
 		return readA;
 	}
