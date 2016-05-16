@@ -92,7 +92,7 @@ public class DirichletClusterFasta {
 		// String input =
 		// "/home/xinping/Desktop/6008/Data/Acary_Ehrl_9104_pair_5W.txt";
 //		String input = "/home/xinping/Desktop/6008/Data/678910_1W.fna";
-		String input = "/home/xinping/options/5.fna";
+		String input = "/home/xinping/SourceCode/metasim/shuf3.2to8-Sanger.fna";
 		String output = null;
 
 		Date date = new Date();
@@ -103,8 +103,8 @@ public class DirichletClusterFasta {
 
 		if (0 == args.length) {
 			printHelp();
-//			params.setAlpha(0.0000000001528);
-//			params.setAlphaLow(0.0000000001528);
+//			params.setAlpha(0.000000001);
+//			params.setAlphaLow(0.000000001);
 			return;
 		}
 
@@ -569,6 +569,309 @@ public class DirichletClusterFasta {
 		}
 	}
 
+	
+	public static int[] dirichletClusterSingleV2(List<DoubleRead> doubleReadList,
+			List<Set<Integer>> overlapList, Params params, int zModeLower) {
+		
+		int[][] z = new int[params.getSeqs()][params.getParticles()];
+		double[] w = new double[params.getParticles()];
+		for (int i = 0; i < params.getSeqs(); i++) {
+			for (int j = 0; j < params.getParticles(); j++) {
+				z[i][j] = 0;
+			}
+		}
+		for (int i = 0; i < params.getParticles(); i++) {
+			w[i] = 1.0 / (0.0 + params.getParticles());
+		}
+
+		Map<Integer, String> idTagMap = new HashMap<Integer, String>();
+		for (int i = 0; i < params.getSeqs(); i++) {
+			idTagMap.put(i, "");
+		}
+		
+		int overlapCount = 0;
+		int totalCount = 0;
+		for (Set<Integer> temp:overlapList) {
+			totalCount += temp.size();
+			if (temp.size() > 1) {
+				overlapCount += temp.size();
+			}
+		}
+
+		int seed = 0;
+		int border = DefaultConstants.GROUPSIZE * totalCount / overlapCount;
+		for (Set<Integer> temp:overlapList) {
+			if (temp.size() > border) {
+				seed++;
+			}
+		}
+		
+		if (seed == 0) {
+			seed = 1;
+		}
+		
+		System.out.print(overlapCount);
+		System.out.print(" / ");
+		System.out.println(totalCount);
+		System.out.println(border);
+		
+		List<Map<Integer, List<Integer>>> tempAccumCountList = new ArrayList<Map<Integer, List<Integer>>>(
+				params.getParticles());
+		List<Map<Integer, Integer>> mapCountList = new ArrayList<Map<Integer, Integer>>(
+				params.getParticles());
+
+		for (int i = 0; i < params.getParticles(); i++) {
+			tempAccumCountList.add(new TreeMap<Integer, List<Integer>>());
+			mapCountList.add(new TreeMap<Integer, Integer>());
+		}
+		
+		int overlapInTotal = 0;
+		int accumSeqCount = 0;
+		for (int i = 0; i < seed; i++) {
+			for (Integer elem : overlapList.get(i)) {
+				for (int j = 0; j < params.getParticles(); j++) {
+					z[elem][j] = i + 1;
+				}
+				idTagMap.put(elem, idTagMap.get(elem) + "Init");
+			}
+			tempAccumCountList = DirichletClusterSingle.updateCountLists(
+					doubleReadList, z, overlapList.get(i), tempAccumCountList);
+			mapCountList = DirichletClusterSingle.updateGroupMapList(mapCountList,
+					z, overlapList.get(i));
+			accumSeqCount += overlapList.get(i).size();
+		}
+
+		DirichletClusterSingle.newGroup(doubleReadList, params.getSeqs()
+				/ (max(z) + 1) / params.getNeighborX());
+
+		List<Set<Integer>> rmList = new ArrayList<Set<Integer>>();
+		
+		
+		Map<Integer, Set<Integer>> overlapResult = new HashMap<Integer, Set<Integer>>();
+		Map<Integer, Set<Integer>> overallResult = new HashMap<Integer, Set<Integer>>();
+
+		int group = max(z);
+		for (int i = seed; i < overlapList.size(); i++) {
+			if (overlapList.get(i).size() > 1) {
+
+				overlapInTotal++;
+				// update
+				int[][] tempZLower = DirichletClusterSingle.clusterOverlapSeqs(
+						mapCountList, tempAccumCountList, doubleReadList,
+						overlapList.get(i), z, w, params.getParticles(),
+						params.getAlphaLow(), accumSeqCount, group);
+				int[][] tempZUpper = DirichletClusterSingle.clusterOverlapSeqs(
+						mapCountList, tempAccumCountList, doubleReadList,
+						overlapList.get(i), z, w, params.getParticles(),
+						params.getAlphaHigh(), accumSeqCount, group);
+				boolean isMarjorityLower = DirichletClusterSingle
+						.checkMajorityVote(tempZLower, params.getMajority());
+				boolean isMarjorityUpper = DirichletClusterSingle
+						.checkMajorityVote(tempZUpper, params.getMajority());
+				int[] voteLower = DirichletClusterSingle
+						.getMode(DirichletClusterSingle.getMode(tempZLower));
+				int[] voteUpper = DirichletClusterSingle
+						.getMode(DirichletClusterSingle.getMode(tempZUpper));
+				int majorityVoteLower = voteLower[0];
+				int majorityVoteUpper = voteUpper[0];
+				if (isMarjorityLower && isMarjorityUpper
+						&& (majorityVoteLower == majorityVoteUpper)) {
+
+					for (Integer j : overlapList.get(i)) {
+						for (int k = 0; k < params.getParticles(); k++) {
+							z[j][k] = majorityVoteLower;
+						}
+						idTagMap.put(j, idTagMap.get(j) + "Majority");
+					}
+
+					tempAccumCountList = DirichletClusterSingle
+							.updateCountLists(doubleReadList, z,
+									overlapList.get(i), tempAccumCountList);
+					mapCountList = DirichletClusterSingle.updateGroupMapList(
+							mapCountList, z, overlapList.get(i));
+
+					accumSeqCount += overlapList.get(i).size();
+					if (overlapResult.containsKey(majorityVoteLower)) {
+
+						overlapResult.get(majorityVoteLower).addAll(
+								overlapList.get(i));
+
+					} else {
+						overlapResult.put(majorityVoteLower,
+								new HashSet<Integer>(overlapList.get(i)));
+
+					}
+					if (max(z) > group) {
+						DirichletClusterSingle.newGroup(
+								doubleReadList,
+								params.getSeqs() / (max(z) + 1)
+										/ params.getNeighborX());
+					}
+					group = max(z);
+
+				} else {
+					rmList.add(overlapList.get(i));
+				}
+			} else {
+
+				for (Integer elem : overlapList.get(i)) {
+					idTagMap.put(elem, idTagMap.get(elem) + "Single");
+					// update
+					z[elem] = DirichletClusterSingle.clusterOverlapSeqs(
+							mapCountList, tempAccumCountList, doubleReadList,
+							overlapList.get(i), z, w, params.getParticles(),
+							params.getAlpha(), accumSeqCount, group)[0];
+					w = DirichletClusterSingle.updateWeights(
+							tempAccumCountList, doubleReadList, elem, z, w,
+							params.getParticles(), group);
+
+					double eff = 0.0;
+					for (double d : w) {
+						eff += d * d;
+					}
+					if (eff > 1 / (params.getThreshold() * params
+							.getParticles())) {
+						int[] resampleIndex = DirichletClusterSingle.sampleInt(
+								w, params.getParticles(), 0);
+						int[] temp = new int[params.getParticles()];
+						for (int j = 0; j < params.getParticles(); j++) {
+							w[j] = 1.0 / (0.0 + params.getParticles());
+							temp[j] = z[elem][resampleIndex[j]];
+						}
+						z[elem] = temp;
+					}
+
+					tempAccumCountList = DirichletClusterSingle
+							.updateCountLists(doubleReadList, z,
+									overlapList.get(i), tempAccumCountList);
+					mapCountList = DirichletClusterSingle.updateGroupMapList(
+							mapCountList, z, overlapList.get(i));
+				}
+				if (max(z) > group) {
+					DirichletClusterSingle.newGroup(
+							doubleReadList,
+							params.getSeqs() / (max(z) + 1)
+									/ params.getNeighborX());
+				}
+				group = max(z);
+				accumSeqCount += overlapList.get(i).size();
+			}
+
+		}
+
+		for (Set<Integer> seqList : rmList) {
+			// update
+			int[][] tempZ = DirichletClusterSingle.clusterOverlapSeqs(
+					mapCountList, tempAccumCountList, doubleReadList, seqList,
+					z, w, params.getParticles(), params.getAlpha(),
+					accumSeqCount, group);
+			int majorityVote = DirichletClusterSingle
+					.getMode(DirichletClusterSingle.getMode(tempZ))[0];
+			for (Integer seqId : seqList) {
+				idTagMap.put(seqId, idTagMap.get(seqId) + "Remove");
+				for (int k = 0; k < params.getParticles(); k++) {
+					z[seqId][k] = majorityVote;
+				}
+			}
+			accumSeqCount += seqList.size();
+
+			tempAccumCountList = DirichletClusterSingle.updateCountLists(
+					doubleReadList, z, seqList, tempAccumCountList);
+			mapCountList = DirichletClusterSingle.updateGroupMapList(
+					mapCountList, z, seqList);
+			if (max(z) > group) {
+				DirichletClusterSingle
+						.newGroup(doubleReadList, params.getSeqs()
+								/ (max(z) + 1) / params.getNeighborX());
+			}
+			group = max(z);
+		}
+
+		int[] result = DirichletClusterSingle
+				.compressResult(DirichletClusterSingle.getMode(z));
+		for (int i = 0; i < result.length; i++) {
+			if (overallResult.containsKey(result[i])) {
+				overallResult.get(result[i]).add(i);
+			} else {
+				Set<Integer> temp = new TreeSet<Integer>();
+				temp.add(i);
+				overallResult.put(result[i], temp);
+			}
+		}
+		for (int i = 0; i < result.length; i++) {
+			result[i] = result[i] + zModeLower;
+		}
+
+		System.out.println();
+		System.out.print(params.getAlphaHigh());
+		System.out.print("\t");
+		System.out.print(doubleReadList.size());
+		System.out.print("\t");
+		System.out.print(overlapInTotal);
+		System.out.print("\t");
+		System.out.print(overlapInTotal - rmList.size());
+		System.out.print("\t");
+		System.out.print(1.0 - (rmList.size() + 0.0) / overlapInTotal);
+		System.out.print("\t");
+		System.out.println(String.valueOf((1.0 - (rmList.size() + 0.0)
+				/ overlapInTotal) > params.getCoverage()));
+		System.out.println("Overlap");
+		for (Integer key : overlapResult.keySet()) {
+			System.out.print(String.valueOf(key) + ":");
+			Map<String, Integer> tempMap = new HashMap<String, Integer>();
+			for (Integer temp : overlapResult.get(key)) {
+				
+				String strKey = doubleReadList.get(temp).getGI();
+				if (tempMap.containsKey(strKey)) {
+					tempMap.put(strKey, tempMap.get(strKey) + 1);
+				} else {
+					tempMap.put(strKey, 1);
+				}
+			}
+			for (String tempKey : tempMap.keySet()) {
+				System.out.print("\t");
+				System.out.print(tempKey);
+				System.out.print("\t");
+				System.out.print(tempMap.get(tempKey));
+				System.out.print("\t");
+				System.out.print(tempMap.get(tempKey)
+						/ (overlapResult.get(key).size() + 0.0));
+			}
+			System.out.println();
+		}
+		System.out.println("Overall");
+		for (Integer key : overallResult.keySet()) {
+			System.out.print(String.valueOf(key) + ":");
+			Map<String, Integer> tempMap = new HashMap<String, Integer>();
+			for (Integer temp : overallResult.get(key)) {
+
+				String strKey = doubleReadList.get(temp).getGI();
+				if (tempMap.containsKey(strKey)) {
+					tempMap.put(strKey, tempMap.get(strKey) + 1);
+				} else {
+					tempMap.put(strKey, 1);
+				}
+			}
+			for (String tempKey : tempMap.keySet()) {
+				System.out.print("\t");
+				System.out.print(tempKey);
+				System.out.print("\t");
+				System.out.print(tempMap.get(tempKey));
+				System.out.print("\t");
+				System.out.print(tempMap.get(tempKey)
+						/ (overallResult.get(key).size() + 0.0));
+			}
+			System.out.println();
+			System.out.println();
+		}
+		if ((1.0 - (rmList.size() + 0.0) / overlapInTotal) > params
+				.getCoverage()) {
+			return result;
+		} else {
+			return null;
+		}
+	}
+
 	private static int[] dirichletCluster(List<DoubleRead> doubleReadList,
 			List<Set<Integer>> overlapList, int[] zMode, Params params)
 			throws CloneNotSupportedException {
@@ -624,7 +927,7 @@ public class DirichletClusterFasta {
 
 			for (double alphaHigh : alphaHighArr) {
 				tempParams.setAlphaHigh(alphaHigh);
-				int[] tempSubResult = dirichletClusterSingle(subDoubleReadList,
+				int[] tempSubResult = dirichletClusterSingleV2(subDoubleReadList,
 						subOverlapList, tempParams, tempZModeLower);
 				if (!flag && (null != tempSubResult)) {
 					subResult = tempSubResult;

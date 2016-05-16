@@ -13,37 +13,62 @@ public class DirichletClusterSingle {
 
 	public static void newGroup(List<DoubleRead> doubleReadList, int neighbor) {
 		Collections.sort(doubleReadList, new DoubleReadCompareGC());
-		for (int i = 0; i < doubleReadList.size(); i++) {
-			int nflag = 1;
-			int pflag = 1;
-			List<Integer> accumCountList = new ArrayList<Integer>(
-					doubleReadList.get(i).getCountList());
-
-			while ((nflag <= neighbor / 2) && (i - nflag >= 0)) {
-				List<Integer> temp = doubleReadList.get(i - nflag)
-						.getCountList();
+		
+		List<Integer> accumCountList = new ArrayList<Integer>(doubleReadList
+				.get(0).getCountList());
+		if (neighbor >= 2 * doubleReadList.size()) {
+			for (int i = 1; i < doubleReadList.size(); i++) {
+				List<Integer> temp = doubleReadList.get(i).getCountList();
 				for (int j = 0; j < accumCountList.size(); j++) {
 					accumCountList.set(j, accumCountList.get(j) + temp.get(j));
 				}
-				nflag++;
 			}
-
-			while ((pflag <= neighbor / 2)
-					&& (i + pflag < doubleReadList.size())) {
-				List<Integer> temp = doubleReadList.get(i + pflag)
-						.getCountList();
+			for (int i = 0; i < doubleReadList.size(); i++) {
+				doubleReadList.get(i).setAccumulateCountList(accumCountList);
+				doubleReadList.get(i).setNewGroupStartp(
+						startPCounts(accumCountList));
+				doubleReadList.get(i).setNewGroupTransp(
+						transPCounts(accumCountList));
+			}
+		} else {
+			for (int i = 1; i <= neighbor / 2; i++) {
+				List<Integer> temp = doubleReadList.get(i).getCountList();
 				for (int j = 0; j < accumCountList.size(); j++) {
 					accumCountList.set(j, accumCountList.get(j) + temp.get(j));
 				}
-				pflag++;
 			}
-
-			doubleReadList.get(i).setAccumulateCountList(accumCountList);
-			doubleReadList.get(i).setNewGroupStartp(
+			int nflag = 0;
+			doubleReadList.get(0).setAccumulateCountList(accumCountList);
+			doubleReadList.get(0).setNewGroupStartp(
 					startPCounts(accumCountList));
-			doubleReadList.get(i).setNewGroupTransp(
+			doubleReadList.get(0).setNewGroupTransp(
 					transPCounts(accumCountList));
+			for (int i = 1; i < doubleReadList.size(); i++) {
+				if (i + neighbor / 2 < doubleReadList.size()) {
+					List<Integer> temp = doubleReadList.get(i + neighbor / 2)
+							.getCountList();
+					for (int j = 0; j < accumCountList.size(); j++) {
+						accumCountList.set(j,
+								accumCountList.get(j) + temp.get(j));
+					}
+				}
+				if (i - nflag > neighbor / 2) {
+					List<Integer> temp = doubleReadList.get(nflag)
+							.getCountList();
+					for (int j = 0; j < accumCountList.size(); j++) {
+						accumCountList.set(j,
+								accumCountList.get(j) - temp.get(j));
+					}
+					nflag++;
+				}
+				doubleReadList.get(i).setAccumulateCountList(accumCountList);
+				doubleReadList.get(i).setNewGroupStartp(
+						startPCounts(accumCountList));
+				doubleReadList.get(i).setNewGroupTransp(
+						transPCounts(accumCountList));
+			}
 		}
+		
 		Collections.sort(doubleReadList, new DoubleReadCompareID());
 	}
 
@@ -144,7 +169,6 @@ public class DirichletClusterSingle {
 		}
 		return colSum;
 	}
-	
 
 	private static double[] startPCounts(List<Integer> counts) {
 		double[] probs = new double[counts.size() / 4];
@@ -273,7 +297,8 @@ public class DirichletClusterSingle {
 					p[k][j] = w[k] * Math.exp(tempSum);
 
 					for (int i = 0; i < startWhere.length; i++) {
-						p[k][j] *= tempStartP[k][j][startWhere[i]] + Double.MIN_NORMAL;
+						p[k][j] *= tempStartP[k][j][startWhere[i]]
+								+ Double.MIN_NORMAL;
 					}
 				} else {
 					p[k][j] = Double.MIN_NORMAL;
@@ -291,7 +316,8 @@ public class DirichletClusterSingle {
 	private static double[] postP(List<Map<Integer, Integer>> groupCount,
 			List<Map<Integer, List<Integer>>> countLists,
 			List<DoubleRead> doubleReadList, int seqIndex, int[][] z,
-			double[] w, int particles, double alpha, int completeSeqCount, int group) {
+			double[] w, int particles, double alpha, int completeSeqCount,
+			int group) {
 		double[] p = new double[group + 1];
 		double[] tempPostP = postPTemp(countLists, doubleReadList, seqIndex, z,
 				w, particles, group);
@@ -335,7 +361,8 @@ public class DirichletClusterSingle {
 	private static int[] clusterOneSeq(List<Map<Integer, Integer>> groupCount,
 			List<Map<Integer, List<Integer>>> countLists,
 			List<DoubleRead> doubleReadList, int seqIndex, int[][] z,
-			double[] w, int particles, double alpha, int completeSeqCount, int group) {
+			double[] w, int particles, double alpha, int completeSeqCount,
+			int group) {
 		double[] posterior = postP(groupCount, countLists, doubleReadList,
 				seqIndex, z, w, particles, alpha, completeSeqCount, group);
 		int[] sample = sampleInt(posterior, particles, 1);
@@ -346,7 +373,8 @@ public class DirichletClusterSingle {
 			List<Map<Integer, Integer>> groupCount,
 			List<Map<Integer, List<Integer>>> countLists,
 			List<DoubleRead> doubleReadList, Set<Integer> seqList, int[][] z,
-			double[] w, int particles, double alpha, int completeSeqCount, int group) {
+			double[] w, int particles, double alpha, int completeSeqCount,
+			int group) {
 		int[][] tempZ = new int[seqList.size()][particles];
 		int flag = 0;
 		for (Integer elem : seqList) {
